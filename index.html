@@ -265,6 +265,22 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
 .hack-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);flex-shrink:0;margin-top:5px}
 .hack-text{font-size:13px;color:var(--ink);line-height:1.55}
 .api-banner-inline{border-left:2px solid var(--amber);padding:12px 16px;margin:0 24px 12px;display:none}
+.basket-item{display:flex;align-items:center;gap:10px;padding:12px;background:var(--paper2);border-radius:12px;margin-bottom:8px}
+.basket-item-info{flex:1;min-width:0}
+.basket-item-name{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.basket-item-macros{font-size:12px;color:var(--muted);margin-top:2px}
+.basket-item-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;flex-shrink:0}
+.basket-item-del{background:none;border:none;color:var(--muted);cursor:pointer;padding:6px;display:flex;align-items:center;flex-shrink:0;border-radius:8px}
+.basket-item-del:active{color:var(--red);background:rgba(194,59,44,.08)}
+.basket-total{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.bt-cell{background:var(--paper);padding:10px 6px;text-align:center}
+.bt-val{font-family:DM Serif Display,serif;font-size:18px;display:block}
+.bt-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;display:block}
+.verdict-box{border-radius:12px;padding:14px;margin-bottom:12px}
+.verdict-box .vb-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+.verdict-box .vb-verdict{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:4px}
+.verdict-box .vb-why{font-size:13px;color:var(--muted);line-height:1.5}
+.verdict-box .vb-gluc{margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,.06);font-size:12px;color:var(--ink);line-height:1.5}
 .api-banner-label{font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
 .api-banner-text{font-size:13px;color:var(--muted)}
 .ios-banner-inline{background:var(--ink);color:var(--paper);border-radius:14px;padding:14px 16px;margin:12px 24px;display:none;align-items:center;gap:12px}
@@ -761,7 +777,13 @@ function handlePhoto(ev){
   });
 }
 function showResult(r,src){
-  pendingMeal=r;
+  pendingMeal=r; if(src) pendingMeal._src=src;
+  // Store base values for quantity calculation
+  pendingMeal._base = {
+    calories: r.calories||0, proteines: r.proteines||0,
+    glucides: r.glucides||0, lipides: r.lipides||0, fibres: r.fibres||0,
+    portion: parseFloat((r.portion_estimee||'100').replace(/[^0-9.]/g,''))||100
+  };
   var qmap={excellent:'q-excellent',bon:'q-bon',moyen:'q-moyen',pauvre:'q-pauvre'};
   var tags=(r.ingredients||[]).map(function(t){return '<span class="tag">'+t+'</span>';}).join('');
   
@@ -809,19 +831,35 @@ function showResult(r,src){
 
     +(tags?'<div style="margin-bottom:12px">'+tags+'</div>':'')
     +(r.conseil?'<div class="ac-tip">'+r.conseil+'</div>':'')
-    +'<select class="ac-select" id="rType"><option>Dejeuner</option><option>Diner</option><option>Souper</option><option>Collation</option></select>'
-    +'<button class="ac-add-btn" onclick="addFromResult()">Ajouter au journal</button>'
+    
+    +'<div style="margin-bottom:12px">'
+    +'<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Quantite que je vais manger</div>'
+    +'<div style="display:flex;align-items:center;gap:8px">'
+    +'<input type="number" id="qtyInput" value="'+(r._base?r._base.portion:100)+'" min="1" max="2000" '
+    +'style="flex:1;padding:11px 14px;border:1.5px solid var(--line);border-radius:10px;font-size:16px;font-family:DM Sans,sans-serif;background:var(--paper);color:var(--ink);outline:none;-webkit-appearance:none" '
+    +'oninput="updateQty(this.value)" placeholder="100">'
+    +'<span style="font-size:14px;color:var(--muted);flex-shrink:0">grammes</span>'
+    +'</div>'
+    +'<div id="qtyMacros" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px;text-align:center"></div>'
+    +'</div>'
+    +'<button class="ac-add-btn" onclick="addFromResult()">Ajouter a mon repas</button>'
     +'</div>';
 }
 function addFromResult(){
   if(!pendingMeal)return;
-  var repas=document.getElementById('rType').value||'Dejeuner';
-  var d=getDay(selDay);
-  d.meals.push({nom:pendingMeal.nom,calories:pendingMeal.calories||0,proteines:pendingMeal.proteines||0,glucides:pendingMeal.glucides||0,lipides:pendingMeal.lipides||0,fibres:pendingMeal.fibres||0,repas:repas});
-  saveDay(selDay,d);pendingMeal=null;
-  document.getElementById('analysisArea').innerHTML='<div style="padding:32px 24px;text-align:center;font-size:15px;color:var(--teal)">Ajoute au journal</div>';
-  buildScroll();renderDay();renderCoach();
-  setTimeout(function(){goScreen('today');},1200);
+  // Add to basket instead of directly to journal
+  addToBasket({
+    nom: pendingMeal.nom,
+    calories: pendingMeal.calories||0,
+    proteines: pendingMeal.proteines||0,
+    glucides: pendingMeal.glucides||0,
+    lipides: pendingMeal.lipides||0,
+    fibres: pendingMeal.fibres||0,
+    qualite: pendingMeal.qualite||'bon',
+    src: pendingMeal._src||null
+  });
+  pendingMeal=null;
+  document.getElementById('analysisArea').innerHTML='';
 }
 
 // ═══ COACH ═════════════════════════════════════
@@ -1459,6 +1497,191 @@ function showLearn(key) {
 }
 
 
+
+
+
+function updateQty(val) {
+  if(!pendingMeal || !pendingMeal._base) return;
+  var qty = parseFloat(val)||0;
+  var base = pendingMeal._base;
+  var ratio = qty / base.portion;
+  var cal  = Math.round(base.calories  * ratio);
+  var prot = Math.round(base.proteines * ratio);
+  var gluc = Math.round(base.glucides  * ratio);
+  var lip  = Math.round(base.lipides   * ratio);
+  var fib  = Math.round(base.fibres    * ratio);
+
+  // Update pendingMeal values
+  pendingMeal.calories  = cal;
+  pendingMeal.proteines = prot;
+  pendingMeal.glucides  = gluc;
+  pendingMeal.lipides   = lip;
+  pendingMeal.fibres    = fib;
+
+  // Update display
+  var qm = document.getElementById('qtyMacros');
+  if(!qm) return;
+  qm.innerHTML = 
+    '<div style="background:var(--paper2);border-radius:8px;padding:8px 4px"><span style="font-size:16px;font-weight:800;color:var(--red);display:block">'+cal+'</span><span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">kcal</span></div>'
+    +'<div style="background:var(--paper2);border-radius:8px;padding:8px 4px"><span style="font-size:16px;font-weight:800;color:var(--green);display:block">'+prot+'g</span><span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">prot.</span></div>'
+    +'<div style="background:var(--paper2);border-radius:8px;padding:8px 4px"><span style="font-size:16px;font-weight:800;color:var(--amber);display:block">'+gluc+'g</span><span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">gluc.</span></div>'
+    +'<div style="background:var(--paper2);border-radius:8px;padding:8px 4px"><span style="font-size:16px;font-weight:800;color:var(--blue);display:block">'+lip+'g</span><span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">lip.</span></div>';
+
+  // Trigger initial display
+  updateQty.lastQty = qty;
+}
+
+// ═══ PANIER / BASKET ═══════════════════════════
+var basket = []; // [{nom, calories, proteines, glucides, lipides, fibres, qualite, src}]
+
+function renderBasket() {
+  var bl = document.getElementById('basketList');
+  var bv = document.getElementById('basketVerdict');
+  var ba = document.getElementById('basketActions');
+  var dl = document.getElementById('photoDropLabel');
+  if(!bl) return;
+
+  if(!basket.length) {
+    bl.innerHTML = '';
+    bv.style.display = 'none';
+    ba.style.display = 'none';
+    if(dl) dl.textContent = 'Photographier un aliment';
+    return;
+  }
+
+  // Totals
+  var totCal = basket.reduce(function(s,i){return s+(i.calories||0);},0);
+  var totProt = basket.reduce(function(s,i){return s+(i.proteines||0);},0);
+  var totGluc = basket.reduce(function(s,i){return s+(i.glucides||0);},0);
+  var totLip = basket.reduce(function(s,i){return s+(i.lipides||0);},0);
+  var totFib = basket.reduce(function(s,i){return s+(i.fibres||0);},0);
+
+  var qmap = {excellent:'#E6F4EC',bon:'#EEF8F3',moyen:'#FBF0E0',pauvre:'#FBE8E6'};
+  var qtxt = {excellent:'#1A5C32',bon:'#1A5C32',moyen:'#7A4A00',pauvre:'#8B1A1A'};
+
+  // Items
+  var html = '';
+  basket.forEach(function(item, i) {
+    var bg = qmap[item.qualite] || '#F2F0EC';
+    var tc = qtxt[item.qualite] || '#555';
+    var qlabel = {excellent:'Excellent',bon:'Bon',moyen:'Moyen',pauvre:'A eviter'}[item.qualite] || item.qualite;
+    html += '<div class="basket-item">'
+      + (item.src ? '<img src="'+item.src+'" style="width:42px;height:42px;object-fit:cover;border-radius:8px;flex-shrink:0">' : '')
+      + '<div class="basket-item-info">'
+      + '<div class="basket-item-name">'+item.nom+'</div>'
+      + '<div class="basket-item-macros">'+item.calories+' kcal · P '+item.proteines+'g · G '+item.glucides+'g · L '+item.lipides+'g</div>'
+      + '</div>'
+      + '<span class="basket-item-badge" style="background:'+bg+';color:'+tc+'">'+qlabel+'</span>'
+      + '<button class="basket-item-del" onclick="removeFromBasket('+i+')">'
+      + '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+      + '</button></div>';
+  });
+
+  // Total row
+  html += '<div class="basket-total">'
+    + '<div class="bt-cell"><span class="bt-val" style="color:var(--red)">'+totCal+'</span><span class="bt-lbl">kcal</span></div>'
+    + '<div class="bt-cell"><span class="bt-val" style="color:var(--green)">'+totProt+'g</span><span class="bt-lbl">prot.</span></div>'
+    + '<div class="bt-cell"><span class="bt-val" style="color:var(--amber)">'+totGluc+'g</span><span class="bt-lbl">gluc.</span></div>'
+    + '<div class="bt-cell"><span class="bt-val" style="color:var(--blue)">'+totLip+'g</span><span class="bt-lbl">lip.</span></div>'
+    + '</div>';
+
+  bl.innerHTML = html;
+  ba.style.display = 'block';
+  if(dl) dl.textContent = 'Ajouter un autre aliment';
+
+  // Verdict global
+  renderBasketVerdict(totCal, totProt, totGluc, totLip, totFib);
+}
+
+function renderBasketVerdict(totCal, totProt, totGluc, totLip, totFib) {
+  var bv = document.getElementById('basketVerdict');
+  if(!bv) return;
+  var G = getGoals();
+
+  // Score simple
+  var score = 0;
+  var msgs = [];
+
+  // Calories du repas : ideal 400-600 kcal pour un dejeuner
+  if(totCal >= 300 && totCal <= 650) { score++; }
+  else if(totCal > 650) { msgs.push('Repas calorique — compense avec un diner leger'); }
+  else if(totCal < 200) { msgs.push('Repas trop leger — ajoute une source de proteines'); }
+
+  // Proteines
+  if(totProt >= 25) { score++; msgs.push('Proteines suffisantes'); }
+  else { msgs.push('Proteines faibles ('+totProt+'g) — ajoute du poulet, oeuf ou fromage blanc'); }
+
+  // Glucides en contexte
+  var glucCtx = '';
+  if(totGluc > 60) { glucCtx = totGluc+'g de glucides : eleve. Si tu fais du sport apres OK, sinon reduis les feculents.'; }
+  else if(totGluc > 30) { glucCtx = totGluc+'g de glucides : correct pour ce repas.'; }
+  else { glucCtx = totGluc+'g de glucides : faible. Ton cerveau a besoin de carburant — ajoute un fruit ou des feculents complexes.'; }
+
+  // Verdict global
+  var allQual = basket.map(function(i){return i.qualite;});
+  var hasPauvre = allQual.indexOf('pauvre') > -1;
+  var hasMoyen = allQual.indexOf('moyen') > -1;
+  var verdict, verdBg, verdBorder, verdLabelColor, verdLabel;
+
+  if(hasPauvre) {
+    verdict = 'Repas a revoir — un element est a eviter';
+    verdBg = '#FBE8E6'; verdBorder = 'var(--red)'; verdLabelColor = 'var(--red)'; verdLabel = 'NON';
+  } else if(hasMoyen && totProt < 20) {
+    verdict = 'Repas moyen — proteines insuffisantes pour ton objectif';
+    verdBg = '#FBF0E0'; verdBorder = 'var(--amber)'; verdLabelColor = 'var(--amber)'; verdLabel = 'BOF';
+  } else if(totProt >= 25 && totCal <= 600) {
+    verdict = 'Bon repas pour ton objectif';
+    verdBg = '#EEF8F3'; verdBorder = 'var(--teal)'; verdLabelColor = 'var(--teal)'; verdLabel = 'OUI';
+  } else {
+    verdict = 'Repas acceptable — quelques ajustements possibles';
+    verdBg = '#FBF0E0'; verdBorder = 'var(--amber)'; verdLabelColor = 'var(--amber)'; verdLabel = 'BOF';
+  }
+
+  bv.style.display = 'block';
+  bv.innerHTML = '<div style="background:'+verdBg+';border-left:3px solid '+verdBorder+';border-radius:10px;padding:14px">'
+    + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+    + '<span style="font-size:12px;font-weight:900;color:'+verdLabelColor+'">'+verdLabel+'</span>'
+    + '<span style="font-size:14px;font-weight:700;color:var(--ink)">'+verdict+'</span>'
+    + '</div>'
+    + (msgs.length ? '<div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:6px">' + msgs.join(' · ') + '</div>' : '')
+    + '<div style="font-size:12px;color:var(--ink);line-height:1.5;border-top:1px solid rgba(0,0,0,.06);padding-top:8px;margin-top:4px">' + glucCtx + '</div>'
+    + '</div>';
+}
+
+function removeFromBasket(i) {
+  basket.splice(i, 1);
+  renderBasket();
+  document.getElementById('analysisArea').innerHTML = '';
+}
+
+function clearBasket() {
+  basket = [];
+  renderBasket();
+  document.getElementById('analysisArea').innerHTML = '';
+}
+
+function addToBasket(item) {
+  basket.push(item);
+  renderBasket();
+  document.getElementById('analysisArea').innerHTML = '';
+}
+
+function addBasketToJournal() {
+  if(!basket.length) return;
+  var repas = document.getElementById('basketMeal').value || 'Dejeuner';
+  var totCal = basket.reduce(function(s,i){return s+(i.calories||0);},0);
+  var totProt = basket.reduce(function(s,i){return s+(i.proteines||0);},0);
+  var totGluc = basket.reduce(function(s,i){return s+(i.glucides||0);},0);
+  var totLip = basket.reduce(function(s,i){return s+(i.lipides||0);},0);
+  var totFib = basket.reduce(function(s,i){return s+(i.fibres||0);},0);
+  var nom = basket.length === 1 ? basket[0].nom : basket.map(function(i){return i.nom;}).join(' + ');
+  var d = getDay(selDay);
+  d.meals.push({nom:nom, calories:totCal, proteines:totProt, glucides:totGluc, lipides:totLip, fibres:totFib, repas:repas});
+  saveDay(selDay, d);
+  clearBasket();
+  buildScroll(); renderDay(); renderCoach();
+  goScreen('today');
+}
 
 // ═══ INIT ═══════════════════════════════════════
 var nd=new Date();
