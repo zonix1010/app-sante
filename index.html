@@ -1756,24 +1756,53 @@ function setFavoris(f) {
 }
 
 function saveToFavoris() {
-  if(!basket.length) { alert('Ajoutez des aliments au panier avant de sauver un favori.'); return; }
-  var name = prompt('Nom de ce repas favori ?');
-  if(!name || !name.trim()) return;
+  if(!basket.length) { showToast('Ajoutez des aliments au panier.'); return; }
+  showFavModal();
+}
+
+function showFavModal() {
+  var modal = document.getElementById('favModal');
+  var input = document.getElementById('favNameInput');
+  if(modal) { modal.style.display='flex'; if(input){ input.value=''; setTimeout(function(){input.focus();},100); } }
+}
+
+function closeFavModal() {
+  var modal = document.getElementById('favModal');
+  if(modal) modal.style.display='none';
+}
+
+function confirmFavModal() {
+  var input = document.getElementById('favNameInput');
+  var name = input ? input.value.trim() : '';
+  if(!name) { input.focus(); return; }
+  closeFavModal();
   var favs = getFavoris();
   var totCal  = basket.reduce(function(s,i){return s+(i.calories||0);},0);
   var totProt = basket.reduce(function(s,i){return s+(i.proteines||0);},0);
   var totGluc = basket.reduce(function(s,i){return s+(i.glucides||0);},0);
   var totLip  = basket.reduce(function(s,i){return s+(i.lipides||0);},0);
   var totFib  = basket.reduce(function(s,i){return s+(i.fibres||0);},0);
-  var items   = basket.map(function(i){return {nom:i.nom, calories:i.calories, proteines:i.proteines, glucides:i.glucides, lipides:i.lipides, fibres:i.fibres};});
-  favs.unshift({id:Date.now(), name:name.trim(), items:items, calories:totCal, proteines:totProt, glucides:totGluc, lipides:totLip, fibres:totFib});
+  var items   = basket.map(function(i){return {nom:i.nom,calories:i.calories,proteines:i.proteines,glucides:i.glucides,lipides:i.lipides,fibres:i.fibres};});
+  favs.unshift({id:Date.now(),name:name,items:items,calories:totCal,proteines:totProt,glucides:totGluc,lipides:totLip,fibres:totFib});
   setFavoris(favs);
   renderFavoris();
-  alert('Favori "'+name.trim()+'" enregistré !');
+  showToast(name+' enregistré dans les favoris');
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  if(!t) return;
+  t.textContent = msg;
+  t.style.opacity = '1';
+  t.style.transform = 'translateY(0)';
+  setTimeout(function(){
+    t.style.opacity='0';
+    t.style.transform='translateY(10px)';
+  }, 2500);
 }
 
 function deleteFavori(id) {
-  if(!confirm('Supprimer ce favori ?')) return;
+  
   setFavoris(getFavoris().filter(function(f){return f.id!==id;}));
   renderFavoris();
 }
@@ -1823,5 +1852,29 @@ renderCoach();
 showLearn("prot");
 renderFavoris();
 </script>
+
+<!-- FAVORI MODAL -->
+<div id="favModal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(245,244,240,.6);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);align-items:flex-end;justify-content:center">
+  <div style="background:var(--paper);border-radius:24px 24px 0 0;padding:28px 24px 40px;width:100%;box-shadow:0 -8px 40px rgba(26,26,24,.12)">
+    <div style="width:36px;height:4px;background:var(--line);border-radius:2px;margin:0 auto 24px"></div>
+    <div style="font-family:DM Serif Display,serif;font-size:22px;color:var(--ink);margin-bottom:6px">Nommer ce favori</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Ce repas sera sauvé et accessible en un tap.</div>
+    <input id="favNameInput" type="text" placeholder="Ex : Collation matin, Dîner semaine..."
+      style="width:100%;padding:14px 16px;border:none;border-bottom:2px solid var(--ink);font-size:16px;font-family:DM Sans,sans-serif;background:var(--paper2);border-radius:12px 12px 0 0;color:var(--ink);outline:none;margin-bottom:20px"
+      onkeydown="if(event.key==='Enter')confirmFavModal()">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button onclick="closeFavModal()" style="padding:14px;background:none;border:1.5px solid var(--line);border-radius:14px;font-size:15px;font-weight:600;color:var(--muted);cursor:pointer;font-family:DM Sans,sans-serif">
+        Annuler
+      </button>
+      <button onclick="confirmFavModal()" style="padding:14px;background:var(--ink);border:none;border-radius:14px;font-size:15px;font-weight:700;color:var(--paper);cursor:pointer;font-family:DM Sans,sans-serif">
+        Enregistrer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" style="position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--ink);color:var(--paper);padding:10px 20px;border-radius:30px;font-size:13px;font-weight:600;font-family:DM Sans,sans-serif;z-index:400;opacity:0;transition:all .3s ease;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(26,26,24,.2)"></div>
+
 </body>
 </html>
