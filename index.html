@@ -304,8 +304,8 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
     <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:rgba(245,244,240,.5);font-size:18px;cursor:pointer"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
   </div>
   <div class="api-banner-inline" id="apiBanner">
-    <div class="api-banner-label">Cle API manquante</div>
-    <div class="api-banner-text">Ajoutez votre cle dans Parametres pour l'analyse photo.</div>
+    <div class="api-banner-label">Clé API manquante</div>
+    <div class="api-banner-text">Ajoutez votre cle dans Paramètres pour l'analyse photo.</div>
   </div>
 
   <div class="day-scroll-inner" id="dayScroll"></div>
@@ -339,19 +339,19 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
 
   <div class="stats-row">
     <div class="stat-cell"><div class="sc-label">Eau</div><div class="sc-val" id="kEau">0<span style="font-size:16px">L</span></div><div class="sc-sub">Objectif 2.5L</div></div>
-    <div class="stat-cell"><div class="sc-label">Cal. nettes</div><div class="sc-val" id="kCalsN">0</div><div class="sc-sub" id="kBurned">0 kcal brulees</div></div>
+    <div class="stat-cell"><div class="sc-label">Cal. nettes</div><div class="sc-val" id="kCalsN">0</div><div class="sc-sub" id="kBurned">0 kcal brûlées</div></div>
   </div>
 
   <div id="coachArea" style="margin-top:12px"></div>
 
   <button class="finish-btn" onclick="genFinish()">
-    <div class="fb-left"><span class="fb-title" id="finishBtnLabel">Suggestions repas</span><span class="fb-sub" id="finishBtnSub">Calcule selon vos carences du moment</span></div>
+    <div class="fb-left"><span class="fb-title" id="finishBtnLabel">Suggestions repas</span><span class="fb-sub" id="finishBtnSub">Calculé selon vos carences du moment</span></div>
     <span class="fb-arrow" style="display:flex;align-items:center"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
   </button>
   <div id="finishArea" class="finish-result" style="display:none"></div>
 
   <div class="section-label">Repas du jour</div>
-  <div id="mealCard"><div class="empty-state"><div class="es-line1">Aucun repas enregistre</div><div class="es-line2">Photographiez votre prochain repas</div></div></div>
+  <div id="mealCard"><div class="empty-state"><div class="es-line1">Aucun repas enregistré</div><div class="es-line2">Photographiez votre prochain repas</div></div></div>
 
   <div class="add-photo-cta" onclick="goScreen('analyse')">
     <span style="display:flex;align-items:center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
@@ -383,17 +383,47 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
   <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(event)">
     <input type="file" id="galleryInput" accept="image/*" style="display:none" onchange="handlePhoto(event)">
   <div id="analysisArea"></div>
-  <div class="manual-section">
-    <div class="ms-title">Ajout manuel</div>
-    <label class="field-label">Aliment ou plat</label>
-    <input type="text" class="field-input" id="manFood" placeholder="Saumon grille, salade verte...">
-    <div class="fields-2">
-      <div><label class="field-label">Calories (kcal)</label><input type="number" class="field-input" id="manCal" placeholder="450"></div>
-      <div><label class="field-label">Proteines (g)</label><input type="number" class="field-input" id="manPro" placeholder="30"></div>
+  <div style="padding:0 24px 40px">
+
+    <!-- FAVORIS ACCORDION -->
+    <div style="border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden">
+      <button onclick="toggleAccordion('favAcc','favChev')" style="width:100%;padding:14px 16px;background:none;border:none;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:DM Sans,sans-serif">
+        <div style="display:flex;align-items:center;gap:10px">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="var(--teal)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span style="font-size:14px;font-weight:700;color:var(--ink)">Repas favoris</span>
+        </div>
+        <svg id="favChev" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="var(--muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div id="favAcc" style="display:none;border-top:1px solid var(--line)">
+        <div style="padding:12px">
+          <div id="favorisList2"></div>
+          <div id="favorisEmpty2" style="font-size:13px;color:var(--muted);padding:6px 0 4px;text-align:center">Aucun favori — composez un repas et enregistrez-le.</div>
+        </div>
+      </div>
     </div>
-    <label class="field-label">Type de repas</label>
-    <select class="field-select" id="manMeal"><option>Dejeuner</option><option>Diner</option><option>Souper</option><option>Collation</option></select>
-    <button class="submit-btn" onclick="addManual()">Ajouter au journal</button>
+
+    <!-- AJOUT MANUEL ACCORDION -->
+    <div style="border:1px solid var(--line);border-radius:14px;overflow:hidden">
+      <button onclick="toggleAccordion('manAcc','manChev')" style="width:100%;padding:14px 16px;background:none;border:none;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:DM Sans,sans-serif">
+        <div style="display:flex;align-items:center;gap:10px">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="var(--muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span style="font-size:14px;font-weight:700;color:var(--ink)">Ajout manuel</span>
+        </div>
+        <svg id="manChev" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="var(--muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div id="manAcc" style="display:none;border-top:1px solid var(--line);padding:16px">
+        <label class="field-label">Aliment ou plat</label>
+        <input type="text" class="field-input" id="manFood" placeholder="Saumon grillé, salade verte...">
+        <div class="fields-2">
+          <div><label class="field-label">Calories (kcal)</label><input type="number" class="field-input" id="manCal" placeholder="450"></div>
+          <div><label class="field-label">Protéines (g)</label><input type="number" class="field-input" id="manPro" placeholder="30"></div>
+        </div>
+        <label class="field-label">Type de repas</label>
+        <select class="field-select" id="manMeal"><option>Déjeuner</option><option>Dîner</option><option>Souper</option><option>Collation</option></select>
+        <button class="submit-btn" onclick="addManual()">Ajouter au journal</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -401,7 +431,7 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
 <div class="screen" id="screen-sport">
   <div class="sport-header"><div class="sport-title">Sport</div></div>
   <div class="sport-totals">
-    <div class="st-cell"><span class="stc-val teal" id="sTotBurned">0</span><span class="stc-lbl">kcal brulees</span></div>
+    <div class="st-cell"><span class="stc-val teal" id="sTotBurned">0</span><span class="stc-lbl">kcal brûlées</span></div>
     <div class="st-cell"><span class="stc-val" id="sTotMin">0</span><span class="stc-lbl">min actives</span></div>
     <div class="st-cell"><span class="stc-val red" id="sTotNet">0</span><span class="stc-lbl">kcal nettes</span></div>
   </div>
@@ -417,20 +447,20 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
       <button class="sport-type-btn" data-type="Marche" data-cal="280" onclick="selSportType(this)"><span class="stb-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M13 4a1 1 0 1 0 2 0 1 1 0 0 0-2 0"/><path d="m7 20 2-5"/><path d="m17 20-4-11"/><path d="m10 10 1-4 3 3 3-1"/></svg></span><span class="stb-name">Marche</span></button>
     </div>
     <div class="sport-fields">
-      <div><label class="field-label">Duree (min)</label><input type="number" class="field-input" id="sDur" placeholder="45"></div>
+      <div><label class="field-label">Durée (min)</label><input type="number" class="field-input" id="sDur" placeholder="45"></div>
       <div><label class="field-label">Notes</label><input type="text" class="field-input" id="sNotes" placeholder="10km, 52min..."></div>
     </div>
-    <label class="field-label">Intensite</label>
+    <label class="field-label">Intensité</label>
     <div class="intensity-row">
-      <button class="int-btn" data-val="0.7" onclick="selInt(this)">Legere</button>
-      <button class="int-btn sel" data-val="1" onclick="selInt(this)">Moderee</button>
+      <button class="int-btn" data-val="0.7" onclick="selInt(this)">Légère</button>
+      <button class="int-btn sel" data-val="1" onclick="selInt(this)">Modérée</button>
       <button class="int-btn" data-val="1.4" onclick="selInt(this)">Intense</button>
       <button class="int-btn" data-val="1.8" onclick="selInt(this)">Max</button>
     </div>
     <button class="submit-btn" onclick="doAddSport()">Enregistrer</button>
   </div>
-  <div class="section-label">Activites du jour</div>
-  <div class="sport-log" id="sportCard"><div class="empty-state"><div class="es-line1">Aucune activite</div></div></div>
+  <div class="section-label">Activités du jour</div>
+  <div class="sport-log" id="sportCard"><div class="empty-state"><div class="es-line1">Aucune activité</div></div></div>
 </div>
 
 <!-- CALENDRIER -->
@@ -451,7 +481,7 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
     <div style="position:relative;height:140px"><canvas id="calChart" role="img" aria-label="Calories par jour">Calories par jour</canvas></div>
   </div>
   <div class="cal-stats">
-    <div class="cs-cell"><span class="csc-val" id="stDays">0</span><span class="csc-lbl">Jours loggues</span></div>
+    <div class="cs-cell"><span class="csc-val" id="stDays">0</span><span class="csc-lbl">Jours loggués</span></div>
     <div class="cs-cell"><span class="csc-val" id="stCals">—</span><span class="csc-lbl">Moy. kcal/j</span></div>
     <div class="cs-cell"><span class="csc-val" id="stSport">0</span><span class="csc-lbl">Sessions sport</span></div>
     <div class="cs-cell"><span class="csc-val" id="stEau">—</span><span class="csc-lbl">Eau moy. (L)</span></div>
@@ -469,15 +499,15 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
       </svg>
       <div class="score-ring-overlay"><span class="sr-num" id="scoreNum">—</span><span class="sr-max">/100</span></div>
     </div>
-    <div class="score-info"><div class="si-title" id="scoreTitle">Score du jour</div><div class="si-desc" id="scoreDesc">Loggez votre journee pour voir votre score</div></div>
+    <div class="score-info"><div class="si-title" id="scoreTitle">Score du jour</div><div class="si-desc" id="scoreDesc">Loggez votre journée pour voir votre score</div></div>
   </div>
-  <button class="bilan-gen-btn" id="bilanBtn" onclick="genBilan()" style="display:flex;align-items:center;justify-content:center;gap:8px"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Generer le bilan IA</button>
+  <button class="bilan-gen-btn" id="bilanBtn" onclick="genBilan()" style="display:flex;align-items:center;justify-content:center;gap:8px"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Générer le bilan IA</button>
   <div class="bilan-content" id="bilanContent"></div>
 </div>
 
 <!-- PARAMETRES -->
 <div class="screen" id="screen-settings">
-  <div class="settings-header"><div class="settings-title">Parametres</div></div>
+  <div class="settings-header"><div class="settings-title">Paramètres</div></div>
   <div class="settings-section">
     <div class="settings-section-label">Cle API Anthropic</div>
     <div class="setting-row"><span class="sr-label">Cle sk-ant-...</span><input type="password" class="sr-input" id="apiKeyIn" placeholder="sk-ant-api03-..."></div>
@@ -490,7 +520,7 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
     <div class="info-note">Calcul : 83kg · 180cm · 42 ans · sedentaire → TDEE 2275 kcal → deficit 525 = 1750 kcal/j</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
       <div class="setting-row"><span class="sr-label">Calories</span><input type="number" class="sr-input" id="gCal" placeholder="1750"></div>
-      <div class="setting-row"><span class="sr-label">Proteines (g)</span><input type="number" class="sr-input" id="gPro" placeholder="160"></div>
+      <div class="setting-row"><span class="sr-label">Protéines (g)</span><input type="number" class="sr-input" id="gPro" placeholder="160"></div>
       <div class="setting-row"><span class="sr-label">Glucides (g)</span><input type="number" class="sr-input" id="gGlu" placeholder="140"></div>
       <div class="setting-row"><span class="sr-label">Lipides (g)</span><input type="number" class="sr-input" id="gLip" placeholder="60"></div>
     </div>
@@ -498,7 +528,7 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
     <div class="sr-ok" id="goalSaved">Objectifs enregistres</div>
   </div>
   <div class="settings-section">
-    <div class="settings-section-label">Icone iPhone</div>
+    <div class="settings-section-label">Icône iPhone</div>
     <div class="info-note">1. Ouvrir dans Safari — 2. Bouton Partager — 3. Sur l'ecran d'accueil</div>
   </div>
 </div>
@@ -513,7 +543,7 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
 
   <!-- SELECTOR -->
   <div style="display:flex;gap:6px;overflow-x:auto;padding:12px 24px 0;scrollbar-width:none" id="learnTabs">
-    <button class="learn-tab on" onclick="showLearn('prot')">Proteines</button>
+    <button class="learn-tab on" onclick="showLearn('prot')">Protéines</button>
     <button class="learn-tab" onclick="showLearn('gluc')">Glucides</button>
     <button class="learn-tab" onclick="showLearn('lip')">Lipides</button>
     <button class="learn-tab" onclick="showLearn('fib')">Fibres</button>
@@ -649,7 +679,7 @@ function renderDay(){
     else defEl.textContent=Math.abs(deficit)+' kcal depassees';
   }
   tx('kSportMin',tMin+' min sport');
-  tx('kBurned',tBurn+' kcal brulees');
+  tx('kBurned',tBurn+' kcal brûlées');
 
   tx('kProt',Math.round(tProt)+'g');tx('kProtPct','/ '+GP+'g');
   tx('kGluc',Math.round(tGluc)+'g');tx('kGlucPct','/ '+GG+'g');
@@ -666,9 +696,9 @@ function renderDay(){
   var mc=document.getElementById('mealCard');
   if(mc){
     if(!data.meals.length){
-      mc.innerHTML='<div class="empty-state"><div class="es-line1">Aucun repas enregistre</div><div class="es-line2">Photographiez votre prochain repas</div></div>';
+      mc.innerHTML='<div class="empty-state"><div class="es-line1">Aucun repas enregistré</div><div class="es-line2">Photographiez votre prochain repas</div></div>';
     }else{
-      var EMOJIS={Dejeuner:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>',Diner:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',Souper:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z"/><path d="M7 21h10"/><path d="M19.5 12 22 6"/></svg>',Collation:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M12 20.94c1.5 0 6-1.04 6-7.94 0-2.21-.73-4.26-1.95-5.56A4 4 0 0 0 12.5 6h-1a4 4 0 0 0-3.55 1.44C6.73 8.68 6 10.73 6 12.94c0 6.9 4.5 8 6 8Z"/><path d="M10 2c0 1.27-.24 2.24-1 3h4c-.76-.76-1-1.73-1-3"/></svg>'};
+      var EMOJIS={Déjeuner:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>',Dîner:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',Souper:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z"/><path d="M7 21h10"/><path d="M19.5 12 22 6"/></svg>',Collation:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M12 20.94c1.5 0 6-1.04 6-7.94 0-2.21-.73-4.26-1.95-5.56A4 4 0 0 0 12.5 6h-1a4 4 0 0 0-3.55 1.44C6.73 8.68 6 10.73 6 12.94c0 6.9 4.5 8 6 8Z"/><path d="M10 2c0 1.27-.24 2.24-1 3h4c-.76-.76-1-1.73-1-3"/></svg>'};
       mc.innerHTML=data.meals.map(function(m,i){
         return '<div class="meal-entry"><span class="me-icon">'+(EMOJIS[m.repas]||'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>')+'</span>'
           +'<div class="me-info"><div class="me-name">'+m.nom+'</div>'
@@ -725,7 +755,7 @@ function renderSportList(){
   var tc=data.meals.reduce(function(s,m){return s+(m.calories||0);},0);
   tx('sTotBurned',tb);tx('sTotMin',tm);tx('sTotNet',Math.max(0,Math.round(tc-tb)));
   var sc=document.getElementById('sportCard');if(!sc)return;
-  if(!data.sport.length){sc.innerHTML='<div class="empty-state"><div class="es-line1">Aucune activite</div></div>';return;}
+  if(!data.sport.length){sc.innerHTML='<div class="empty-state"><div class="es-line1">Aucune activité</div></div>';return;}
   var emj={Course:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M13 4a1 1 0 1 0 2 0 1 1 0 0 0-2 0"/><path d="M7.5 17l2-5.5 2.5 2.5 2-4.5 4.5 2"/><path d="M17.5 9.5 20 8"/></svg>',Musculation:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M12.5 16.5 10 20"/><path d="M4 11.2c.2-.9.7-1.7 1.5-2.2"/><path d="M2 15c0 3.3 2.7 6 6 6h3.5c1.4 0 2.5-1.1 2.5-2.5S13 16 11.5 16H10"/><path d="M14 17.5c.7-1.4 1-2.9 1-4.5 0-5.5-4.5-10-10-10-.8 0-1.5.1-2.2.2"/></svg>',Velo:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>',Natation:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M2 12h20"/><path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M2 18c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg>',Tennis:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M5.64 17.66 17.66 5.64"/><path d="m20.35 9.65-1.65 1.65"/><path d="m3.65 14.35 1.65-1.65"/><circle cx="12" cy="12" r="10"/></svg>',Golf:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><circle cx="19" cy="19" r="2"/><path d="M9 2L2.5 14H16L9 2z"/><path d="M9 14v7"/></svg>',Yoga:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><circle cx="12" cy="5" r="2"/><path d="m10.2 22-1.2-7H4l2-5"/><path d="m13.8 22 1.2-7H20l-2-5"/><path d="m7 13 5-3 5 3"/></svg>',Marche:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M13 4a1 1 0 1 0 2 0 1 1 0 0 0-2 0"/><path d="m7 20 2-5"/><path d="m17 20-4-11"/><path d="m10 10 1-4 3 3 3-1"/></svg>',Ski:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',Autre:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'};
   sc.innerHTML=data.sport.map(function(sp,i){
     return '<div class="sport-entry"><span class="se-icon">'+(emj[sp.type]||'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>')+'</span>'
@@ -758,7 +788,7 @@ function handlePhoto(ev){
     document.getElementById('analysisArea').innerHTML='<div style="margin:16px 24px"><img src="'+src+'" class="preview-img" alt="repas"><div style="text-align:center;padding:12px"><div class="spin"></div><div style="font-size:13px;color:var(--muted)">Analyse IA en cours...</div></div></div>';
     var apiKey=getKey();
     if(!apiKey){
-      document.getElementById('analysisArea').innerHTML='<div style="margin:16px 24px"><img src="'+src+'" class="preview-img" alt="repas"><div style="border-left:2px solid var(--amber);padding:12px 16px"><div style="font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Cle API manquante</div><div style="font-size:13px;color:var(--muted)">Configurez votre cle dans Parametres.</div></div></div>';
+      document.getElementById('analysisArea').innerHTML='<div style="margin:16px 24px"><img src="'+src+'" class="preview-img" alt="repas"><div style="border-left:2px solid var(--amber);padding:12px 16px"><div style="font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Clé API manquante</div><div style="font-size:13px;color:var(--muted)">Configurez votre cle dans Paramètres.</div></div></div>';
       ev.target.value='';return;
     }
     fetch('https://api.anthropic.com/v1/messages',{
@@ -766,14 +796,14 @@ function handlePhoto(ev){
       headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,messages:[{role:'user',content:[
         {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
-        {type:'text',text:'Analyse ce repas. Reponds UNIQUEMENT en JSON valide sans backticks:\n{"nom":"nom du plat","repas":"Dejeuner","calories":450,"proteines":35,"glucides":40,"lipides":15,"fibres":5,"qualite":"excellent|bon|moyen|pauvre","conseil":"conseil court","ingredients":["a","b"],"portion_estimee":"250g"}'}
+        {type:'text',text:'Analyse ce repas. Reponds UNIQUEMENT en JSON valide sans backticks:\n{"nom":"nom du plat","repas":"Déjeuner","calories":450,"proteines":35,"glucides":40,"lipides":15,"fibres":5,"qualite":"excellent|bon|moyen|pauvre","conseil":"conseil court","ingredients":["a","b"],"portion_estimee":"250g"}'}
       ]}]})
     }).then(function(r){return r.json();}).then(function(data){
       var txt=(data.content||[]).find(function(c){return c.type==='text';});
       var parsed=JSON.parse((txt?txt.text:'').replace(/```json|```/g,'').trim());
       pendingMeal=parsed;showResult(parsed,src);
     }).catch(function(err){
-      document.getElementById('analysisArea').innerHTML='<div style="margin:16px 24px"><div style="border-left:2px solid var(--red);padding:12px 16px"><div style="font-size:13px;color:var(--red)">Erreur API — verifiez votre cle dans Parametres.</div></div></div>';
+      document.getElementById('analysisArea').innerHTML='<div style="margin:16px 24px"><div style="border-left:2px solid var(--red);padding:12px 16px"><div style="font-size:13px;color:var(--red)">Erreur API — verifiez votre cle dans Paramètres.</div></div></div>';
     });
     ev.target.value='';
   });
@@ -835,7 +865,7 @@ function showResult(r,src){
     +(r.conseil?'<div class="ac-tip">'+r.conseil+'</div>':'')
     
     +'<div style="margin-bottom:12px">'
-    +'<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Quantite que je vais manger</div>'
+    +'<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Quantité que je vais manger</div>'
     +'<div style="display:flex;align-items:center;gap:8px">'
     +'<input type="number" id="qtyInput" value="'+(r._base?r._base.portion:100)+'" min="1" max="2000" '
     +'style="flex:1;padding:11px 14px;border:1.5px solid var(--line);border-radius:10px;font-size:16px;font-family:DM Sans,sans-serif;background:var(--paper);color:var(--ink);outline:none;-webkit-appearance:none" '
@@ -844,7 +874,7 @@ function showResult(r,src){
     +'</div>'
     +'<div id="qtyMacros" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px;text-align:center"></div>'
     +'</div>'
-    +'<button class="ac-add-btn" onclick="addFromResult()">Ajouter a mon repas</button>'
+    +'<button class="ac-add-btn" onclick="addFromResult()">Ajouter à mon repas</button>'
     +'</div>';
 }
 function addFromResult(){
@@ -866,12 +896,12 @@ function addFromResult(){
 
 // ═══ COACH ═════════════════════════════════════
 var MEAL_IDEAS={
-  Dejeuner:[
+  Déjeuner:[
     {n:"Poulet grille 200g + riz complet + brocolis",c:480,p:42,g:38,l:10,f:6,e:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 3.15 5.5 6.5-.48 2.92-3.37 5.5-6.5 5.5-2.7 0-5-1.37-6.5-3.5"/><path d="M18 12l2 2-2 2"/><path d="M2 12h3"/></svg>'},
     {n:"Saumon 180g + patate douce + haricots verts",c:520,p:38,g:36,l:18,f:7,e:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 3.15 5.5 6.5-.48 2.92-3.37 5.5-6.5 5.5-2.7 0-5-1.37-6.5-3.5"/><path d="M18 12l2 2-2 2"/><path d="M2 12h3"/></svg>'},
     {n:"Lentilles + legumes rotis + oeuf dur",c:460,p:28,g:52,l:10,f:12,e:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>'}
   ],
-  Diner:[
+  Dîner:[
     {n:"Steak 180g + epinards + quinoa",c:490,p:44,g:28,l:16,f:5,e:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><circle cx="12.5" cy="8.5" r="2.5"/><path d="M12.5 2a6.5 6.5 0 0 0-6.22 4.6c-1.1 3.13-.78 3.9-3.18 6.08A3 3 0 0 0 5 18c4 0 8.4-1.8 11.4-4.3A6.5 6.5 0 0 0 12.5 2Z"/></svg>'},
     {n:"Cabillaud vapeur + ratatouille + riz",c:400,p:36,g:32,l:8,f:8,e:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 3.15 5.5 6.5-.48 2.92-3.37 5.5-6.5 5.5-2.7 0-5-1.37-6.5-3.5"/><path d="M18 12l2 2-2 2"/><path d="M2 12h3"/></svg>'},
     {n:"Omelette 3 oeufs + champignons + salade",c:340,p:28,g:8,l:20,f:4,e:'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M12 22c6.23-.05 7.87-5.57 7.5-10-.36-4.34-3.95-9.96-7.5-10-3.55.04-7.14 5.66-7.5 10-.37 4.43 1.27 9.95 7.5 10z"/></svg>'}
@@ -926,10 +956,10 @@ function renderCoach(){
   // Meal suggestion
   var nextMeal='',mealTitle='';
   if(hour>=7&&hour<11&&meals.indexOf('Collation')<0&&meals.length>0){nextMeal='Collation';mealTitle='Collation matinale (avant le dejeuner)';}
-  else if(hour>=7&&hour<11&&meals.length===0){nextMeal='Collation';mealTitle='Quelque chose a manger ce matin ?';}
-  else if(hour>=11&&hour<14&&meals.indexOf('Dejeuner')<0){nextMeal='Dejeuner';mealTitle='Idees dejeuner';}
-  else if(hour>=14&&hour<17&&meals.indexOf('Collation')<0){nextMeal='Collation';mealTitle='Collation apres-midi';}
-  else if(hour>=17&&hour<20&&meals.indexOf('Diner')<0){nextMeal='Diner';mealTitle='Idees diner';}
+  else if(hour>=7&&hour<11&&meals.length===0){nextMeal='Collation';mealTitle='Quelque chose à manger ce matin ?';}
+  else if(hour>=11&&hour<14&&meals.indexOf('Déjeuner')<0){nextMeal='Déjeuner';mealTitle='Idées déjeuner';}
+  else if(hour>=14&&hour<17&&meals.indexOf('Collation')<0){nextMeal='Collation';mealTitle='Collation après-midi';}
+  else if(hour>=17&&hour<20&&meals.indexOf('Dîner')<0){nextMeal='Dîner';mealTitle='Idées dîner';}
   else if(hour>=20&&meals.indexOf('Souper')<0){nextMeal='Souper';mealTitle='Souper leger si encore faim';}
 
   // Update finish button label dynamically
@@ -937,10 +967,10 @@ function renderCoach(){
   var fs2=document.getElementById('finishBtnSub');
   if(fl2){
     if(hour<11)fl2.textContent='Que manger ce matin ?';
-    else if(hour<14)fl2.textContent='Que manger au dejeuner ?';
+    else if(hour<14)fl2.textContent='Que manger au déjeuner ?';
     else if(hour<17)fl2.textContent='Idees pour la collation';
     else if(hour<20)fl2.textContent='Que manger ce soir ?';
-    else fl2.textContent='Encore faim ? Idees souper';
+    else fl2.textContent='Encore faim ? Idées souper';
   }
 
   if(nextMeal&&MEAL_IDEAS[nextMeal]){
@@ -985,7 +1015,7 @@ function genFinish(){
   }
   var apiKey=getKey();
   if(!apiKey){
-    if(fa)fa.innerHTML='<div style="font-size:13px;color:var(--muted)">Ajoutez votre cle API dans Parametres.</div>';
+    if(fa)fa.innerHTML='<div style="font-size:13px;color:var(--muted)">Ajoutez votre cle API dans Paramètres.</div>';
     if(fl)fl.textContent='Que manger ce soir ?';return;
   }
   if(fa)fa.innerHTML='<div style="text-align:center;padding:16px 0"><div class="spin"></div><div style="font-size:13px;color:var(--muted)">Calcul en cours...</div></div>';
@@ -994,7 +1024,7 @@ function genFinish(){
     "Tu es nutritionniste. Propose 3 REPAS COMPLETEMENT DIFFERENTS.",
     "Chaque repas doit A LUI SEUL couvrir ces besoins :",
     "Calories : entre "+Math.round(remCals*0.8)+" et "+remCals+"kcal",
-    "Proteines : "+remProt+"g minimum (priorite absolue)",
+    "Protéines : "+remProt+"g minimum (priorite absolue)",
     "Glucides : "+remGluc+"g minimum","Lipides : "+remLip+"g","Fibres : "+remFib+"g minimum",
     "Grammes exacts par ingredient. JSON sans backticks :",
     '{"idees":[{"nom":"nom","description":"ing1 Xg + ing2 Xg","calories":0,"proteines":0,"glucides":0,"lipides":0,"fibres":0,"icone":"emoji"},{"nom":"...","description":"...","calories":0,"proteines":0,"glucides":0,"lipides":0,"fibres":0,"icone":"emoji"},{"nom":"...","description":"...","calories":0,"proteines":0,"glucides":0,"lipides":0,"fibres":0,"icone":"emoji"}]}'
@@ -1152,7 +1182,7 @@ function calcScore(){
   tx('scoreNum',cals>0?sc:'—');
   var arc=document.getElementById('scoreArc');
   if(arc&&cals>0){arc.style.strokeDashoffset=239-(239*sc/100);arc.style.stroke=sc>=80?'var(--green)':sc>=60?'var(--teal)':sc>=40?'var(--amber)':'var(--red)';}
-  tx('scoreTitle',sc>=80?'Journee parfaite':sc>=60?'Bonne journee':sc>=40?'A ameliorer':'Loggez votre journee');
+  tx('scoreTitle',sc>=80?'Journee parfaite':sc>=60?'Bonne journee':sc>=40?'A ameliorer':'Loggez votre journée');
   tx('scoreDesc',cals>0?(cals+' kcal · '+prot+'g prot · '+eau.toFixed(1)+'L eau'+(sport?' · sport':'')):'Commencez a logger pour voir votre score');
 }
 function genBilan(){
@@ -1165,7 +1195,7 @@ function genBilan(){
   var sp=data.sport.map(function(s){return s.type+' '+s.duration+'min';}).join(', ')||'aucun';
   var rp=data.meals.map(function(m){return m.repas+':'+m.nom+'('+m.calories+'kcal)';}).join(', ')||'aucun';
   var apiKey=getKey();var bilanEl=document.getElementById('bilanContent');
-  if(!apiKey){bilanEl.innerHTML='<div style="font-size:13px;color:var(--muted);padding:16px 0">Ajoutez votre cle API dans Parametres.</div>';btn.textContent='Generer le bilan IA';btn.disabled=false;return;}
+  if(!apiKey){bilanEl.innerHTML='<div style="font-size:13px;color:var(--muted);padding:16px 0">Ajoutez votre cle API dans Paramètres.</div>';btn.textContent='Générer le bilan IA';btn.disabled=false;return;}
   fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
     headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
@@ -1183,7 +1213,7 @@ function genBilan(){
     if(b.demain)html+='<div style="padding:14px 0;border-top:1px solid var(--line);margin-top:4px"><div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Demain</div><div style="font-size:14px;color:var(--ink)">'+b.demain+'</div></div>';
     bilanEl.innerHTML=html;
   }).catch(function(){bilanEl.innerHTML='<div style="font-size:13px;color:var(--muted);padding:16px 0">Erreur — verifiez votre cle API.</div>';});
-  btn.textContent='Generer le bilan IA';btn.disabled=false;calcScore();
+  btn.textContent='Générer le bilan IA';btn.disabled=false;calcScore();
 }
 
 // ═══ SETTINGS ══════════════════════════════════
@@ -1218,7 +1248,7 @@ makePWAIcon();
 // LEARN CONTENT
 var LEARN_DATA = {
   prot: {
-    name: "Proteines",
+    name: "Protéines",
     tagline: "Le materiau de construction du corps. Muscles, hormones, enzymes, anticorps — tout est fait de proteines.",
     role: "Chaque proteine est une chaine d\u2019acides amines. Le corps les demonte et les reconstruit en permanence pour reparer les tissus musculaires, fabriquer des enzymes digestives, produire des hormones comme l\u2019insuline, et alimenter le systeme immunitaire. Sans apport suffisant, le corps cannibale ses propres muscles pour subvenir a ses besoins.",
     chain: [
@@ -1304,7 +1334,7 @@ var LEARN_DATA = {
         "Remplace le riz blanc par du riz complet : indice glycemique divise par 2",
         "Mange les legumes avant les feculents : la fibre ralentit l\u2019absorption du glucose",
         "Patate douce au lieu de pomme de terre : plus de fibres, IG plus bas",
-        "Regle simple : glucides le matin et avant/apres le sport. Proteines + legumes le soir.",
+        "Regle simple : glucides le matin et avant/apres le sport. Protéines + legumes le soir.",
         "Ne bois pas tes glucides : jus, sodas, smoothies = pic glycemique immediat"
       ]
     }
@@ -1534,6 +1564,19 @@ function updateQty(val) {
 }
 
 
+
+// ═══ ACCORDION ══════════════════════════════════
+function toggleAccordion(contentId, chevId) {
+  var el = document.getElementById(contentId);
+  var chev = document.getElementById(chevId);
+  if(!el) return;
+  var open = el.style.display === 'block';
+  el.style.display = open ? 'none' : 'block';
+  if(chev) chev.style.transform = open ? '' : 'rotate(180deg)';
+  // Refresh favoris list when opening
+  if(!open && contentId === 'favAcc') renderFavoris();
+}
+
 // ═══ FAVORIS ═══════════════════════════════════
 function getFavoris() {
   try { return JSON.parse(localStorage.getItem('nFavoris')||'[]'); } catch(e) { return []; }
@@ -1556,7 +1599,7 @@ function saveToFavoris() {
   favs.push({id:Date.now(), name:name, items:items, calories:totCal, proteines:totProt, glucides:totGluc, lipides:totLip, fibres:totFib});
   saveFavoris(favs);
   renderFavoris();
-  alert('Favori enregistre !');
+  alert('Favori enregistré !');
 }
 
 function deleteFavori(id) {
@@ -1683,9 +1726,9 @@ function renderBasketVerdict(totCal, totProt, totGluc, totLip, totFib) {
   else if(totCal > 650) { msgs.push('Repas calorique — compense avec un diner leger'); }
   else if(totCal < 200) { msgs.push('Repas trop leger — ajoute une source de proteines'); }
 
-  // Proteines
-  if(totProt >= 25) { score++; msgs.push('Proteines suffisantes'); }
-  else { msgs.push('Proteines faibles ('+totProt+'g) — ajoute du poulet, oeuf ou fromage blanc'); }
+  // Protéines
+  if(totProt >= 25) { score++; msgs.push('Protéines suffisantes'); }
+  else { msgs.push('Protéines faibles ('+totProt+'g) — ajoute du poulet, oeuf ou fromage blanc'); }
 
   // Glucides en contexte
   var glucCtx = '';
@@ -1744,18 +1787,25 @@ function addToBasket(item) {
 
 function addBasketToJournal() {
   if(!basket.length) return;
-  var repas = document.getElementById('basketMeal').value || 'Dejeuner';
-  var totCal = basket.reduce(function(s,i){return s+(i.calories||0);},0);
+  var repas = document.getElementById('basketMeal').value || 'Déjeuner';
+  var totCal  = basket.reduce(function(s,i){return s+(i.calories||0);},0);
   var totProt = basket.reduce(function(s,i){return s+(i.proteines||0);},0);
   var totGluc = basket.reduce(function(s,i){return s+(i.glucides||0);},0);
-  var totLip = basket.reduce(function(s,i){return s+(i.lipides||0);},0);
-  var totFib = basket.reduce(function(s,i){return s+(i.fibres||0);},0);
-  var nom = basket.length === 1 ? basket[0].nom : basket.map(function(i){return i.nom;}).join(' + ');
+  var totLip  = basket.reduce(function(s,i){return s+(i.lipides||0);},0);
+  var totFib  = basket.reduce(function(s,i){return s+(i.fibres||0);},0);
+  var nom = basket.length === 1
+    ? basket[0].nom
+    : basket.map(function(i){return i.nom;}).join(' + ');
   var d = getDay(selDay);
+  if(!d.meals) d.meals = [];
   d.meals.push({nom:nom, calories:totCal, proteines:totProt, glucides:totGluc, lipides:totLip, fibres:totFib, repas:repas});
   saveDay(selDay, d);
-  clearBasket();
-  buildScroll(); renderDay(); renderCoach();
+  basket = [];
+  document.getElementById('analysisArea').innerHTML = '';
+  renderBasket();
+  buildScroll();
+  renderDay();
+  renderCoach();
   goScreen('today');
 }
 
