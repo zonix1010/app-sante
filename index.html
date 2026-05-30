@@ -381,6 +381,7 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
     <div class="pd-sub">L'IA identifie les calories, proteines, glucides et lipides</div>
   </div>
   <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(event)">
+    <input type="file" id="galleryInput" accept="image/*" style="display:none" onchange="handlePhoto(event)">
   <div id="analysisArea"></div>
   <div class="manual-section">
     <div class="ms-title">Ajout manuel</div>
@@ -574,6 +575,7 @@ function goScreen(id){
   document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('on');});
   var nb=document.getElementById('nav-'+id);if(nb)nb.classList.add('on');
   if(id==='cal')renderCal();
+  if(id==='analyse')renderFavoris();
   if(id==='bilan')calcScore();
   if(id==='today'){renderCoach();renderDay();}
   if(id==='settings')loadSettings();
@@ -1531,6 +1533,80 @@ function updateQty(val) {
   updateQty.lastQty = qty;
 }
 
+
+// ═══ FAVORIS ═══════════════════════════════════
+function getFavoris() {
+  try { return JSON.parse(localStorage.getItem('nFavoris')||'[]'); } catch(e) { return []; }
+}
+function saveFavoris(favs) {
+  try { localStorage.setItem('nFavoris', JSON.stringify(favs)); } catch(e) {}
+}
+
+function saveToFavoris() {
+  if(!basket.length) return;
+  var name = prompt('Nom de ce repas favori ?');
+  if(!name) return;
+  var favs = getFavoris();
+  var totCal  = basket.reduce(function(s,i){return s+(i.calories||0);},0);
+  var totProt = basket.reduce(function(s,i){return s+(i.proteines||0);},0);
+  var totGluc = basket.reduce(function(s,i){return s+(i.glucides||0);},0);
+  var totLip  = basket.reduce(function(s,i){return s+(i.lipides||0);},0);
+  var totFib  = basket.reduce(function(s,i){return s+(i.fibres||0);},0);
+  var items   = basket.map(function(i){return {nom:i.nom,calories:i.calories,proteines:i.proteines,glucides:i.glucides,lipides:i.lipides,fibres:i.fibres};});
+  favs.push({id:Date.now(), name:name, items:items, calories:totCal, proteines:totProt, glucides:totGluc, lipides:totLip, fibres:totFib});
+  saveFavoris(favs);
+  renderFavoris();
+  alert('Favori enregistre !');
+}
+
+function deleteFavori(id) {
+  var favs = getFavoris().filter(function(f){return f.id!==id;});
+  saveFavoris(favs);
+  renderFavoris();
+}
+
+function addFavoriToBasket(fav) {
+  // Add each item of the favori to the basket
+  fav.items.forEach(function(item) {
+    basket.push({
+      nom: item.nom,
+      calories: item.calories||0,
+      proteines: item.proteines||0,
+      glucides: item.glucides||0,
+      lipides: item.lipides||0,
+      fibres: item.fibres||0,
+      qualite: 'bon',
+      src: null
+    });
+  });
+  renderBasket();
+}
+
+function renderFavoris() {
+  var favs = getFavoris();
+  var el = document.getElementById('favorisList');
+  var empty = document.getElementById('favorisEmpty');
+  if(!el) return;
+  if(!favs.length) {
+    el.innerHTML = '';
+    if(empty) empty.style.display = 'block';
+    return;
+  }
+  if(empty) empty.style.display = 'none';
+  el.innerHTML = favs.map(function(f) {
+    return '<div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--paper2);border-radius:12px;margin-bottom:8px;cursor:pointer" onclick="addFavoriToBasket('+JSON.stringify(f).replace(/'/g,"\'")+')">'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="font-size:14px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+f.name+'</div>'
+      + '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+f.calories+' kcal · P '+f.proteines+'g · G '+f.glucides+'g · L '+f.lipides+'g</div>'
+      + '</div>'
+      + '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="var(--teal)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" style="flex-shrink:0"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>'
+      + '<button onclick="event.stopPropagation();deleteFavori('+f.id+')" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;display:flex;align-items:center">'
+      + '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+      + '</button>'
+      + '</div>';
+  }).join('');
+}
+
 // ═══ PANIER / BASKET ═══════════════════════════
 var basket = []; // [{nom, calories, proteines, glucides, lipides, fibres, qualite, src}]
 
@@ -1693,6 +1769,7 @@ buildScroll();
 renderDay();
 renderCoach();
 showLearn("prot");
+renderFavoris();
 </script>
 </body>
 </html>
