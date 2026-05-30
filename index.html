@@ -375,45 +375,75 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
 <!-- ANALYSE -->
 <div class="screen" id="screen-analyse">
   <div class="analyse-header"><div class="analyse-title">Analyser</div></div>
-  <div class="photo-drop" onclick="document.getElementById('photoInput').click()">
-    <div style="display:flex;justify-content:center;margin-bottom:14px;color:var(--teal)"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
-    <div class="pd-title">Photographier un repas</div>
-    <div class="pd-sub">L'IA identifie les calories, proteines, glucides et lipides</div>
-  </div>
-  <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(event)">
-    <input type="file" id="galleryInput" accept="image/*" style="display:none" onchange="handlePhoto(event)">
-  <div id="analysisArea"></div>
-  <div style="padding:0 24px 40px">
 
-    <!-- FAVORIS ACCORDION -->
-    <div style="border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden">
-      <button onclick="toggleAccordion('favAcc','favChev')" style="width:100%;padding:14px 16px;background:none;border:none;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:DM Sans,sans-serif">
-        <div style="display:flex;align-items:center;gap:10px">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="var(--teal)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          <span style="font-size:14px;font-weight:700;color:var(--ink)">Repas favoris</span>
-        </div>
-        <svg id="favChev" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="var(--muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
-      <div id="favAcc" style="display:none;border-top:1px solid var(--line)">
-        <div style="padding:12px">
-          <div id="favorisList2"></div>
-          <div id="favorisEmpty2" style="font-size:13px;color:var(--muted);padding:6px 0 4px;text-align:center">Aucun favori — composez un repas et enregistrez-le.</div>
-        </div>
+  <div style="padding:0 20px">
+
+    <!-- ① PHOTO BUTTONS -->
+    <div onclick="document.getElementById('photoInput').click()" style="border:1.5px dashed rgba(0,107,94,.3);border-radius:18px;padding:32px 20px;text-align:center;cursor:pointer;background:rgba(0,107,94,.03);margin-bottom:10px">
+      <div style="display:flex;justify-content:center;margin-bottom:10px"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" stroke="var(--teal)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+      <div style="font-size:16px;font-weight:700;color:var(--teal)">Photographier un aliment</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:4px">Ajoute plusieurs aliments avant de valider</div>
+    </div>
+    <button onclick="document.getElementById('galleryInput').click()" style="width:100%;padding:11px;background:none;border:1.5px solid var(--line);border-radius:12px;font-size:13px;font-weight:600;color:var(--muted);font-family:DM Sans,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:16px">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Choisir depuis la galerie
+    </button>
+    <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(event)">
+    <input type="file" id="galleryInput" accept="image/*" style="display:none" onchange="handlePhoto(event)">
+
+    <!-- ② ANALYSIS RESULT (loading/result) -->
+    <div id="analysisArea"></div>
+
+    <!-- ③ PANIER EN COURS -->
+    <div id="basketSection" style="display:none;margin-top:4px">
+      <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Mon repas en cours</div>
+      <div id="basketItems"></div>
+      <!-- Total -->
+      <div id="basketTotal" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-radius:12px;overflow:hidden;margin-bottom:12px"></div>
+      <!-- Verdict -->
+      <div id="basketVerdict" style="margin-bottom:12px"></div>
+      <!-- Actions -->
+      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:8px">
+        <select id="basketMeal" style="padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;font-size:14px;font-family:DM Sans,sans-serif;background:var(--paper);color:var(--ink);outline:none;-webkit-appearance:none">
+          <option>Déjeuner</option><option>Dîner</option><option>Souper</option><option>Collation</option>
+        </select>
+        <button onclick="addBasketToJournal()" style="padding:12px 18px;background:var(--ink);color:var(--paper);border:none;border-radius:12px;font-size:14px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Valider
+        </button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button onclick="saveToFavoris()" style="padding:10px;background:none;border:1.5px solid var(--teal);border-radius:10px;font-size:12px;font-weight:700;color:var(--teal);cursor:pointer;font-family:DM Sans,sans-serif;display:flex;align-items:center;justify-content:center;gap:5px">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="var(--teal)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Sauver favori
+        </button>
+        <button onclick="clearBasket()" style="padding:10px;background:none;border:1.5px solid var(--line);border-radius:10px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;font-family:DM Sans,sans-serif">
+          Vider
+        </button>
       </div>
     </div>
 
-    <!-- AJOUT MANUEL ACCORDION -->
-    <div style="border:1px solid var(--line);border-radius:14px;overflow:hidden">
-      <button onclick="toggleAccordion('manAcc','manChev')" style="width:100%;padding:14px 16px;background:none;border:none;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:DM Sans,sans-serif">
-        <div style="display:flex;align-items:center;gap:10px">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="var(--muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          <span style="font-size:14px;font-weight:700;color:var(--ink)">Ajout manuel</span>
-        </div>
+    <!-- ④ SEPARATEUR -->
+    <div style="height:1px;background:var(--line);margin:20px 0"></div>
+
+    <!-- ⑤ REPAS FAVORIS (accordion) -->
+    <div style="border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden">
+      <button onclick="toggleAcc('favAcc','favChev')" style="width:100%;padding:14px 16px;background:none;border:none;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:DM Sans,sans-serif">
+        <div style="display:flex;align-items:center;gap:10px"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="var(--teal)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span style="font-size:14px;font-weight:700;color:var(--ink)">Repas favoris</span></div>
+        <svg id="favChev" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="var(--muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div id="favAcc" style="display:none;border-top:1px solid var(--line);padding:12px">
+        <div id="favList"></div>
+        <div id="favEmpty" style="font-size:13px;color:var(--muted);text-align:center;padding:8px 0">Aucun favori — composez un repas et sauvez-le.</div>
+      </div>
+    </div>
+
+    <!-- ⑥ AJOUT MANUEL (accordion) -->
+    <div style="border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:40px">
+      <button onclick="toggleAcc('manAcc','manChev')" style="width:100%;padding:14px 16px;background:none;border:none;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:DM Sans,sans-serif">
+        <div style="display:flex;align-items:center;gap:10px"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span style="font-size:14px;font-weight:700;color:var(--ink)">Ajout manuel</span></div>
         <svg id="manChev" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="var(--muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div id="manAcc" style="display:none;border-top:1px solid var(--line);padding:16px">
         <label class="field-label">Aliment ou plat</label>
-        <input type="text" class="field-input" id="manFood" placeholder="Saumon grillé, salade verte...">
+        <input type="text" class="field-input" id="manFood" placeholder="Saumon grillé, riz complet...">
         <div class="fields-2">
           <div><label class="field-label">Calories (kcal)</label><input type="number" class="field-input" id="manCal" placeholder="450"></div>
           <div><label class="field-label">Protéines (g)</label><input type="number" class="field-input" id="manPro" placeholder="30"></div>
@@ -605,7 +635,7 @@ function goScreen(id){
   document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('on');});
   var nb=document.getElementById('nav-'+id);if(nb)nb.classList.add('on');
   if(id==='cal')renderCal();
-  if(id==='analyse')renderFavoris();
+  if(id==='analyse'){renderFavoris();}
   if(id==='bilan')calcScore();
   if(id==='today'){renderCoach();renderDay();}
   if(id==='settings')loadSettings();
@@ -878,20 +908,19 @@ function showResult(r,src){
     +'</div>';
 }
 function addFromResult(){
-  if(!pendingMeal)return;
-  // Add to basket instead of directly to journal
+  if(!pendingMeal) return;
   addToBasket({
-    nom: pendingMeal.nom,
+    nom:      pendingMeal.nom,
     calories: pendingMeal.calories||0,
-    proteines: pendingMeal.proteines||0,
+    proteines:pendingMeal.proteines||0,
     glucides: pendingMeal.glucides||0,
-    lipides: pendingMeal.lipides||0,
-    fibres: pendingMeal.fibres||0,
-    qualite: pendingMeal.qualite||'bon',
-    src: pendingMeal._src||null
+    lipides:  pendingMeal.lipides||0,
+    fibres:   pendingMeal.fibres||0,
+    qualite:  pendingMeal.qualite||'bon',
+    src:      pendingMeal._src||null
   });
-  pendingMeal=null;
-  document.getElementById('analysisArea').innerHTML='';
+  pendingMeal = null;
+  document.getElementById('analysisArea').innerHTML = '';
 }
 
 // ═══ COACH ═════════════════════════════════════
@@ -1565,205 +1594,113 @@ function updateQty(val) {
 
 
 
-// ═══ ACCORDION ══════════════════════════════════
-function toggleAccordion(contentId, chevId) {
-  var el = document.getElementById(contentId);
-  var chev = document.getElementById(chevId);
+// ═══ ACCORDION ═══════════════════════════════
+function toggleAcc(id, chevId) {
+  var el = document.getElementById(id);
+  var ch = document.getElementById(chevId);
   if(!el) return;
   var open = el.style.display === 'block';
   el.style.display = open ? 'none' : 'block';
-  if(chev) chev.style.transform = open ? '' : 'rotate(180deg)';
-  // Refresh favoris list when opening
-  if(!open && contentId === 'favAcc') renderFavoris();
+  if(ch) ch.style.transform = open ? '' : 'rotate(180deg)';
+  if(!open && id === 'favAcc') renderFavoris();
 }
 
-// ═══ FAVORIS ═══════════════════════════════════
-function getFavoris() {
-  try { return JSON.parse(localStorage.getItem('nFavoris')||'[]'); } catch(e) { return []; }
-}
-function saveFavoris(favs) {
-  try { localStorage.setItem('nFavoris', JSON.stringify(favs)); } catch(e) {}
-}
+// ═══ BASKET ════════════════════════════════════
+var basket = [];
 
-function saveToFavoris() {
-  if(!basket.length) return;
-  var name = prompt('Nom de ce repas favori ?');
-  if(!name) return;
-  var favs = getFavoris();
+function renderBasket() {
+  var sec = document.getElementById('basketSection');
+  var items = document.getElementById('basketItems');
+  var tot = document.getElementById('basketTotal');
+  var verd = document.getElementById('basketVerdict');
+  if(!sec) return;
+
+  if(!basket.length) {
+    sec.style.display = 'none';
+    if(items) items.innerHTML = '';
+    if(tot) tot.innerHTML = '';
+    if(verd) verd.innerHTML = '';
+    return;
+  }
+  sec.style.display = 'block';
+
+  // Item rows
+  var qmap = {excellent:'#E6F4EC',bon:'#EEF8F3',moyen:'#FBF0E0',pauvre:'#FBE8E6'};
+  var qtxt = {excellent:'#1A5C32',bon:'#2D6A4F',moyen:'#7A4A00',pauvre:'#8B1A1A'};
+  var qlbl = {excellent:'Excellent',bon:'Bon',moyen:'Moyen',pauvre:'À éviter'};
+  if(items) {
+    items.innerHTML = basket.map(function(item, i) {
+      var bg = qmap[item.qualite]||'#F2F0EC';
+      var tc = qtxt[item.qualite]||'#555';
+      var ql = qlbl[item.qualite]||item.qualite;
+      return '<div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)">'
+        + (item.src ? '<img src="'+item.src+'" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex-shrink:0">' : '<div style="width:40px;height:40px;background:var(--paper2);border-radius:8px;flex-shrink:0"></div>')
+        + '<div style="flex:1;min-width:0">'
+        + '<div style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+item.nom+'</div>'
+        + '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+item.calories+' kcal · P '+item.proteines+'g · G '+item.glucides+'g · L '+item.lipides+'g</div>'
+        + '</div>'
+        + '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:'+bg+';color:'+tc+';flex-shrink:0">'+ql+'</span>'
+        + '<button onclick="removeFromBasket('+i+')" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:6px;display:flex;align-items:center">'
+        + '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+        + '</button></div>';
+    }).join('') + '<div style="height:12px"></div>';
+  }
+
+  // Totals
   var totCal  = basket.reduce(function(s,i){return s+(i.calories||0);},0);
   var totProt = basket.reduce(function(s,i){return s+(i.proteines||0);},0);
   var totGluc = basket.reduce(function(s,i){return s+(i.glucides||0);},0);
   var totLip  = basket.reduce(function(s,i){return s+(i.lipides||0);},0);
-  var totFib  = basket.reduce(function(s,i){return s+(i.fibres||0);},0);
-  var items   = basket.map(function(i){return {nom:i.nom,calories:i.calories,proteines:i.proteines,glucides:i.glucides,lipides:i.lipides,fibres:i.fibres};});
-  favs.push({id:Date.now(), name:name, items:items, calories:totCal, proteines:totProt, glucides:totGluc, lipides:totLip, fibres:totFib});
-  saveFavoris(favs);
-  renderFavoris();
-  alert('Favori enregistré !');
-}
-
-function deleteFavori(id) {
-  var favs = getFavoris().filter(function(f){return f.id!==id;});
-  saveFavoris(favs);
-  renderFavoris();
-}
-
-function addFavoriToBasket(fav) {
-  // Add each item of the favori to the basket
-  fav.items.forEach(function(item) {
-    basket.push({
-      nom: item.nom,
-      calories: item.calories||0,
-      proteines: item.proteines||0,
-      glucides: item.glucides||0,
-      lipides: item.lipides||0,
-      fibres: item.fibres||0,
-      qualite: 'bon',
-      src: null
-    });
-  });
-  renderBasket();
-}
-
-function renderFavoris() {
-  var favs = getFavoris();
-  var el = document.getElementById('favorisList');
-  var empty = document.getElementById('favorisEmpty');
-  if(!el) return;
-  if(!favs.length) {
-    el.innerHTML = '';
-    if(empty) empty.style.display = 'block';
-    return;
+  if(tot) {
+    tot.innerHTML = '<div style="background:var(--paper);padding:12px 6px;text-align:center"><span style="font-family:DM Serif Display,serif;font-size:20px;color:var(--red);display:block">'+totCal+'</span><span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">kcal</span></div>'
+      + '<div style="background:var(--paper);padding:12px 6px;text-align:center"><span style="font-family:DM Serif Display,serif;font-size:20px;color:var(--green);display:block">'+totProt+'g</span><span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">prot.</span></div>'
+      + '<div style="background:var(--paper);padding:12px 6px;text-align:center"><span style="font-family:DM Serif Display,serif;font-size:20px;color:var(--amber);display:block">'+totGluc+'g</span><span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">gluc.</span></div>'
+      + '<div style="background:var(--paper);padding:12px 6px;text-align:center"><span style="font-family:DM Serif Display,serif;font-size:20px;color:var(--blue);display:block">'+totLip+'g</span><span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">lip.</span></div>';
   }
-  if(empty) empty.style.display = 'none';
-  el.innerHTML = favs.map(function(f) {
-    return '<div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--paper2);border-radius:12px;margin-bottom:8px;cursor:pointer" onclick="addFavoriToBasket('+JSON.stringify(f).replace(/'/g,"\'")+')">'
-      + '<div style="flex:1;min-width:0">'
-      + '<div style="font-size:14px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+f.name+'</div>'
-      + '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+f.calories+' kcal · P '+f.proteines+'g · G '+f.glucides+'g · L '+f.lipides+'g</div>'
-      + '</div>'
-      + '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="var(--teal)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" style="flex-shrink:0"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>'
-      + '<button onclick="event.stopPropagation();deleteFavori('+f.id+')" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;display:flex;align-items:center">'
-      + '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
-      + '</button>'
-      + '</div>';
-  }).join('');
-}
-
-// ═══ PANIER / BASKET ═══════════════════════════
-var basket = []; // [{nom, calories, proteines, glucides, lipides, fibres, qualite, src}]
-
-function renderBasket() {
-  var bl = document.getElementById('basketList');
-  var bv = document.getElementById('basketVerdict');
-  var ba = document.getElementById('basketActions');
-  var dl = document.getElementById('photoDropLabel');
-  if(!bl) return;
-
-  if(!basket.length) {
-    bl.innerHTML = '';
-    bv.style.display = 'none';
-    ba.style.display = 'none';
-    if(dl) dl.textContent = 'Photographier un aliment';
-    return;
-  }
-
-  // Totals
-  var totCal = basket.reduce(function(s,i){return s+(i.calories||0);},0);
-  var totProt = basket.reduce(function(s,i){return s+(i.proteines||0);},0);
-  var totGluc = basket.reduce(function(s,i){return s+(i.glucides||0);},0);
-  var totLip = basket.reduce(function(s,i){return s+(i.lipides||0);},0);
-  var totFib = basket.reduce(function(s,i){return s+(i.fibres||0);},0);
-
-  var qmap = {excellent:'#E6F4EC',bon:'#EEF8F3',moyen:'#FBF0E0',pauvre:'#FBE8E6'};
-  var qtxt = {excellent:'#1A5C32',bon:'#1A5C32',moyen:'#7A4A00',pauvre:'#8B1A1A'};
-
-  // Items
-  var html = '';
-  basket.forEach(function(item, i) {
-    var bg = qmap[item.qualite] || '#F2F0EC';
-    var tc = qtxt[item.qualite] || '#555';
-    var qlabel = {excellent:'Excellent',bon:'Bon',moyen:'Moyen',pauvre:'A eviter'}[item.qualite] || item.qualite;
-    html += '<div class="basket-item">'
-      + (item.src ? '<img src="'+item.src+'" style="width:42px;height:42px;object-fit:cover;border-radius:8px;flex-shrink:0">' : '')
-      + '<div class="basket-item-info">'
-      + '<div class="basket-item-name">'+item.nom+'</div>'
-      + '<div class="basket-item-macros">'+item.calories+' kcal · P '+item.proteines+'g · G '+item.glucides+'g · L '+item.lipides+'g</div>'
-      + '</div>'
-      + '<span class="basket-item-badge" style="background:'+bg+';color:'+tc+'">'+qlabel+'</span>'
-      + '<button class="basket-item-del" onclick="removeFromBasket('+i+')">'
-      + '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
-      + '</button></div>';
-  });
-
-  // Total row
-  html += '<div class="basket-total">'
-    + '<div class="bt-cell"><span class="bt-val" style="color:var(--red)">'+totCal+'</span><span class="bt-lbl">kcal</span></div>'
-    + '<div class="bt-cell"><span class="bt-val" style="color:var(--green)">'+totProt+'g</span><span class="bt-lbl">prot.</span></div>'
-    + '<div class="bt-cell"><span class="bt-val" style="color:var(--amber)">'+totGluc+'g</span><span class="bt-lbl">gluc.</span></div>'
-    + '<div class="bt-cell"><span class="bt-val" style="color:var(--blue)">'+totLip+'g</span><span class="bt-lbl">lip.</span></div>'
-    + '</div>';
-
-  bl.innerHTML = html;
-  ba.style.display = 'block';
-  if(dl) dl.textContent = 'Ajouter un autre aliment';
 
   // Verdict global
-  renderBasketVerdict(totCal, totProt, totGluc, totLip, totFib);
+  renderBasketVerdict(totCal, totProt, totGluc, totLip);
 }
 
-function renderBasketVerdict(totCal, totProt, totGluc, totLip, totFib) {
-  var bv = document.getElementById('basketVerdict');
-  if(!bv) return;
+function renderBasketVerdict(totCal, totProt, totGluc, totLip) {
   var G = getGoals();
+  var el = document.getElementById('basketVerdict');
+  if(!el) return;
+  var hasPauvre = basket.some(function(i){return i.qualite==='pauvre';});
+  var hasMoyen  = basket.some(function(i){return i.qualite==='moyen';});
+  var verdict, bg, border, label, why, glucCtx;
 
-  // Score simple
-  var score = 0;
-  var msgs = [];
-
-  // Calories du repas : ideal 400-600 kcal pour un dejeuner
-  if(totCal >= 300 && totCal <= 650) { score++; }
-  else if(totCal > 650) { msgs.push('Repas calorique — compense avec un diner leger'); }
-  else if(totCal < 200) { msgs.push('Repas trop leger — ajoute une source de proteines'); }
-
-  // Protéines
-  if(totProt >= 25) { score++; msgs.push('Protéines suffisantes'); }
-  else { msgs.push('Protéines faibles ('+totProt+'g) — ajoute du poulet, oeuf ou fromage blanc'); }
-
-  // Glucides en contexte
-  var glucCtx = '';
-  if(totGluc > 60) { glucCtx = totGluc+'g de glucides : eleve. Si tu fais du sport apres OK, sinon reduis les feculents.'; }
-  else if(totGluc > 30) { glucCtx = totGluc+'g de glucides : correct pour ce repas.'; }
-  else { glucCtx = totGluc+'g de glucides : faible. Ton cerveau a besoin de carburant — ajoute un fruit ou des feculents complexes.'; }
-
-  // Verdict global
-  var allQual = basket.map(function(i){return i.qualite;});
-  var hasPauvre = allQual.indexOf('pauvre') > -1;
-  var hasMoyen = allQual.indexOf('moyen') > -1;
-  var verdict, verdBg, verdBorder, verdLabelColor, verdLabel;
-
-  if(hasPauvre) {
-    verdict = 'Repas a revoir — un element est a eviter';
-    verdBg = '#FBE8E6'; verdBorder = 'var(--red)'; verdLabelColor = 'var(--red)'; verdLabel = 'NON';
-  } else if(hasMoyen && totProt < 20) {
-    verdict = 'Repas moyen — proteines insuffisantes pour ton objectif';
-    verdBg = '#FBF0E0'; verdBorder = 'var(--amber)'; verdLabelColor = 'var(--amber)'; verdLabel = 'BOF';
-  } else if(totProt >= 25 && totCal <= 600) {
-    verdict = 'Bon repas pour ton objectif';
-    verdBg = '#EEF8F3'; verdBorder = 'var(--teal)'; verdLabelColor = 'var(--teal)'; verdLabel = 'OUI';
+  // RED FLAG — calories dépassent objectif journalier entier
+  if(totCal > (G.cals||1750)*0.7 && basket.length <= 2) {
+    label = 'STOP'; bg='#FBE8E6'; border='var(--red)';
+    verdict = 'Ce repas dépasse déjà 70% de ton objectif journalier.';
+    why = 'Tu n’as plus assez de marge pour le reste de la journée. Réduis la portion ou choisis autre chose.';
+  } else if(hasPauvre || totCal > 800) {
+    label = 'NON'; bg='#FBE8E6'; border='var(--red)';
+    verdict = hasPauvre ? 'Un aliment de ce repas est à éviter.' : 'Repas trop calorique pour ton objectif.';
+    why = hasPauvre ? 'Retire cet aliment et remplace-le par une alternative plus adaptée.' : 'Réduis les portions ou remplace un élément.';
+  } else if(hasMoyen || totProt < 20) {
+    label = 'BOF'; bg='#FBF0E0'; border='var(--amber)';
+    verdict = totProt < 20 ? 'Protéines trop faibles ('+totProt+'g).' : 'Repas acceptable mais améliorable.';
+    why = totProt < 20 ? 'Ajoute une source de protéines : blanc de poulet, oeuf, fromage blanc, thon.' : 'Quelques ajustements possibles pour optimiser.';
   } else {
-    verdict = 'Repas acceptable — quelques ajustements possibles';
-    verdBg = '#FBF0E0'; verdBorder = 'var(--amber)'; verdLabelColor = 'var(--amber)'; verdLabel = 'BOF';
+    label = 'OUI'; bg='#EEF8F3'; border='var(--teal)';
+    verdict = 'Bon repas pour ton objectif.';
+    why = totProt >= 30 ? 'Protéines solides ('+totProt+'g). Continue comme ça.' : 'Équilibré et dans tes objectifs.';
   }
 
-  bv.style.display = 'block';
-  bv.innerHTML = '<div style="background:'+verdBg+';border-left:3px solid '+verdBorder+';border-radius:10px;padding:14px">'
-    + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
-    + '<span style="font-size:12px;font-weight:900;color:'+verdLabelColor+'">'+verdLabel+'</span>'
-    + '<span style="font-size:14px;font-weight:700;color:var(--ink)">'+verdict+'</span>'
+  // Glucides contexte
+  if(totGluc > 70) glucCtx = totGluc+'g de glucides : élevé pour un repas. OK si tu as du sport après, sinon réduis les féculents.';
+  else if(totGluc > 30) glucCtx = totGluc+'g de glucides : correct.';
+  else glucCtx = totGluc+'g de glucides : faible. Ton cerveau a besoin de carburant.';
+
+  el.innerHTML = '<div style="background:'+bg+';border-left:4px solid '+border+';border-radius:10px;padding:14px">'
+    + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">'
+    + '<span style="font-size:13px;font-weight:900;color:'+border+'">'+label+'</span>'
+    + '<span style="font-size:15px;font-weight:700;color:var(--ink)">'+verdict+'</span>'
     + '</div>'
-    + (msgs.length ? '<div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:6px">' + msgs.join(' · ') + '</div>' : '')
-    + '<div style="font-size:12px;color:var(--ink);line-height:1.5;border-top:1px solid rgba(0,0,0,.06);padding-top:8px;margin-top:4px">' + glucCtx + '</div>'
+    + '<div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:6px">'+why+'</div>'
+    + '<div style="font-size:12px;color:var(--ink);line-height:1.5;border-top:1px solid rgba(0,0,0,.08);padding-top:7px;margin-top:2px">'+glucCtx+'</div>'
     + '</div>';
 }
 
@@ -1787,7 +1724,8 @@ function addToBasket(item) {
 
 function addBasketToJournal() {
   if(!basket.length) return;
-  var repas = document.getElementById('basketMeal').value || 'Déjeuner';
+  var sel = document.getElementById('basketMeal');
+  var repas = sel ? sel.value : 'Déjeuner';
   var totCal  = basket.reduce(function(s,i){return s+(i.calories||0);},0);
   var totProt = basket.reduce(function(s,i){return s+(i.proteines||0);},0);
   var totGluc = basket.reduce(function(s,i){return s+(i.glucides||0);},0);
@@ -1801,12 +1739,76 @@ function addBasketToJournal() {
   d.meals.push({nom:nom, calories:totCal, proteines:totProt, glucides:totGluc, lipides:totLip, fibres:totFib, repas:repas});
   saveDay(selDay, d);
   basket = [];
-  document.getElementById('analysisArea').innerHTML = '';
   renderBasket();
+  document.getElementById('analysisArea').innerHTML = '';
   buildScroll();
   renderDay();
   renderCoach();
   goScreen('today');
+}
+
+// ═══ FAVORIS ═══════════════════════════════════
+function getFavoris() {
+  try { return JSON.parse(localStorage.getItem('nFavoris')||'[]'); } catch(e) { return []; }
+}
+function setFavoris(f) {
+  try { localStorage.setItem('nFavoris', JSON.stringify(f)); } catch(e) {}
+}
+
+function saveToFavoris() {
+  if(!basket.length) { alert('Ajoutez des aliments au panier avant de sauver un favori.'); return; }
+  var name = prompt('Nom de ce repas favori ?');
+  if(!name || !name.trim()) return;
+  var favs = getFavoris();
+  var totCal  = basket.reduce(function(s,i){return s+(i.calories||0);},0);
+  var totProt = basket.reduce(function(s,i){return s+(i.proteines||0);},0);
+  var totGluc = basket.reduce(function(s,i){return s+(i.glucides||0);},0);
+  var totLip  = basket.reduce(function(s,i){return s+(i.lipides||0);},0);
+  var totFib  = basket.reduce(function(s,i){return s+(i.fibres||0);},0);
+  var items   = basket.map(function(i){return {nom:i.nom, calories:i.calories, proteines:i.proteines, glucides:i.glucides, lipides:i.lipides, fibres:i.fibres};});
+  favs.unshift({id:Date.now(), name:name.trim(), items:items, calories:totCal, proteines:totProt, glucides:totGluc, lipides:totLip, fibres:totFib});
+  setFavoris(favs);
+  renderFavoris();
+  alert('Favori "'+name.trim()+'" enregistré !');
+}
+
+function deleteFavori(id) {
+  if(!confirm('Supprimer ce favori ?')) return;
+  setFavoris(getFavoris().filter(function(f){return f.id!==id;}));
+  renderFavoris();
+}
+
+function addFavoriToBasket(id) {
+  var fav = getFavoris().find(function(f){return f.id===id;});
+  if(!fav) return;
+  fav.items.forEach(function(item) {
+    basket.push({nom:item.nom, calories:item.calories, proteines:item.proteines, glucides:item.glucides, lipides:item.lipides, fibres:item.fibres||0, qualite:'bon', src:null});
+  });
+  renderBasket();
+}
+
+function renderFavoris() {
+  var favs = getFavoris();
+  var el = document.getElementById('favList');
+  var empty = document.getElementById('favEmpty');
+  if(!el) return;
+  if(!favs.length) {
+    el.innerHTML = '';
+    if(empty) empty.style.display = 'block';
+    return;
+  }
+  if(empty) empty.style.display = 'none';
+  el.innerHTML = favs.map(function(f) {
+    return '<div style="display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--paper2);border-radius:10px;margin-bottom:7px;cursor:pointer" onclick="addFavoriToBasket('+f.id+')">'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+f.name+'</div>'
+      + '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+f.calories+' kcal · P '+f.proteines+'g · G '+f.glucides+'g · L '+f.lipides+'g</div>'
+      + '</div>'
+      + '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" stroke="var(--teal)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" style="flex-shrink:0"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>'
+      + '<button onclick="event.stopPropagation();deleteFavori('+f.id+')" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:6px;display:flex;align-items:center">'
+      + '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+      + '</button></div>';
+  }).join('');
 }
 
 // ═══ INIT ═══════════════════════════════════════
