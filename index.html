@@ -667,10 +667,22 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
   </div>
 </div>
 
-  <div id="bilanCorpsView" style="display:none;padding:16px 24px 80px">
-    <div id="suiviRappelB" style="margin-bottom:16px">
-      <div style="background:#EEF8F3;border-radius:12px;padding:12px 16px;font-size:13px;color:var(--teal)">Prenez votre première photo pour commencer le suivi corporel.</div>
+  <div <div id="bilanCorpsView" style="display:none;padding:20px 24px 80px">
+    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px">Suivi corporel</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+      <button onclick="document.getElementById('corpsCamera').click()" style="padding:16px 12px;background:var(--teal);color:#fff;border:none;border-radius:14px;font-size:13px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Prendre une photo
+      </button>
+      <button onclick="document.getElementById('corpsGallery').click()" style="padding:16px 12px;background:none;color:var(--ink);border:1.5px solid var(--line);border-radius:14px;font-size:13px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Depuis la galerie
+      </button>
     </div>
+    <input type="file" id="corpsCamera" accept="image/*" capture="environment" style="display:none" onchange="corpsPhotoAdded(event)">
+    <input type="file" id="corpsGallery" accept="image/*" style="display:none" onchange="corpsPhotoAdded(event)">
+    <div id="corpsPhotoResult"></div>
+  </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
       <button onclick="document.getElementById('suiviCamB').click()" style="padding:14px;background:var(--teal);color:#fff;border:none;border-radius:14px;font-size:13px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Photo
@@ -2759,36 +2771,31 @@ var _bilanYear  = new Date().getFullYear();
 var MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
 function showBilanView(view) {
-  var dayView   = document.getElementById('bilanDayView');
-  var monthView = document.getElementById('bilanMonthView');
-  var suiviView = document.getElementById('bilanSuiviView');
-  var tabDay    = document.getElementById('bilanTabDay');
-  var tabMonth  = document.getElementById('bilanTabMonth');
-  var tabSuivi  = document.getElementById('bilanTabSuivi');
-  if(!dayView || !monthView) return;
-  // Hide all
-  dayView.style.display   = 'none';
-  monthView.style.display = 'none';
-  if(suiviView) suiviView.style.display = 'none';
-  // Reset all tabs
-  var allTabs = [tabDay, tabMonth, tabSuivi];
-  allTabs.forEach(function(t){ if(t){ t.style.background='none'; t.style.color='var(--muted)'; t.style.borderColor='var(--line)'; }});
-  // Activate selected
-  if(view === 'day') {
-    dayView.style.display = 'block';
-    if(tabDay){ tabDay.style.background='var(--ink)'; tabDay.style.color='var(--paper)'; tabDay.style.borderColor='var(--ink)'; }
+  var dv = document.getElementById('bilanDayView');
+  var mv = document.getElementById('bilanMonthView');
+  var cv = document.getElementById('bilanCorpsView');
+  var tD = document.getElementById('bilanTabDay');
+  var tM = document.getElementById('bilanTabMonth');
+  var tC = document.getElementById('bilanTabCorps');
+  if(dv) dv.style.display='none';
+  if(mv) mv.style.display='none';
+  if(cv) cv.style.display='none';
+  [tD,tM,tC].forEach(function(t){if(t){t.style.background='none';t.style.color='var(--muted)';t.style.borderColor='var(--line)';}});
+  if(view==='day'){
+    if(dv) dv.style.display='block';
+    if(tD){tD.style.background='var(--ink)';tD.style.color='var(--paper)';tD.style.borderColor='var(--ink)';}
     calcScore();
-  } else if(view === 'month') {
-    monthView.style.display = 'block';
-    if(tabMonth){ tabMonth.style.background='var(--ink)'; tabMonth.style.color='var(--paper)'; tabMonth.style.borderColor='var(--ink)'; }
-    renderBilanMonth();
-    renderBilanHistory();
-  } else if(view === 'suivi') {
-    if(suiviView) suiviView.style.display = 'block';
-    if(tabSuivi){ tabSuivi.style.background='var(--ink)'; tabSuivi.style.color='var(--paper)'; tabSuivi.style.borderColor='var(--ink)'; }
-    renderSuivi();
+  } else if(view==='month'){
+    if(mv) mv.style.display='block';
+    if(tM){tM.style.background='var(--ink)';tM.style.color='var(--paper)';tM.style.borderColor='var(--ink)';}
+    renderBilanMonth();renderBilanHistory();
+  } else if(view==='corps'){
+    if(cv) cv.style.display='block';
+    if(tC){tC.style.background='var(--ink)';tC.style.color='var(--paper)';tC.style.borderColor='var(--ink)';}
+    renderCorpsView();
   }
 }
+
 
 function bilanNavMonth(dir) {
   _bilanMonth += dir;
@@ -3348,6 +3355,21 @@ function renderCorpsView() {
     });})(p.id);
     gEl.appendChild(card);
   });
+}
+
+
+function corpsPhotoAdded(event) {
+  var file = event.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var el = document.getElementById('corpsPhotoResult');
+    if(!el) return;
+    el.innerHTML = '<img src="'+e.target.result+'" style="width:100%;border-radius:14px;margin-bottom:12px;display:block">'
+      + '<div style="font-size:14px;color:var(--muted);text-align:center">Photo chargée — étape 2 à venir</div>';
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
 }
 
 // ═══ INIT ═══════════════════════════════════════
