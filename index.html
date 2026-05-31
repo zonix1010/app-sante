@@ -379,10 +379,7 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
 
   <div class="section-label">Repas du jour</div>
   <div id="mealCard"><div class="empty-state"><div class="es-line1">Aucun repas enregistré</div><div class="es-line2">Photographiez votre prochain repas</div></div></div>
-
-  <div class="add-photo-cta" onclick="goScreen('analyse')">
-    <span style="display:flex;align-items:center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
-    <div class="apc-text"><div class="apc-title">Analyser un repas</div><div class="apc-sub">Photo → calories et macros en 2 secondes</div></div>
+<div class="apc-sub">Photo → calories et macros en 2 secondes</div></div>
     <span style="display:flex;align-items:center;color:rgba(245,244,240,.4)"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
   </div>
 
@@ -1862,6 +1859,7 @@ function confirmFavModal() {
   var name = input ? input.value.trim() : '';
   if(!name) { input.focus(); return; }
   closeFavModal();
+  if(window._confirmFavOverride) { window._confirmFavOverride(name); return; }
   var favs = getFavoris();
   var totCal  = basket.reduce(function(s,i){return s+(i.calories||0);},0);
   var totProt = basket.reduce(function(s,i){return s+(i.proteines||0);},0);
@@ -1986,6 +1984,40 @@ function renderObjectifProgress() {
       + '</div>';
   }
   cont.innerHTML = html;
+}
+
+
+function saveMealAsFavori(idx) {
+  var data = getDay(selDay);
+  var meal = data.meals[idx];
+  if(!meal) return;
+  var name = meal.nom;
+  // Show the fav modal with pre-filled name
+  var input = document.getElementById('favNameInput');
+  var modal = document.getElementById('favModal');
+  if(input) input.value = name;
+  if(modal) modal.style.display = 'flex';
+  // Store the meal to save when confirmed
+  window._pendingFavMeal = meal;
+  // Override confirmFavModal temporarily
+  window._confirmFavOverride = function(favName) {
+    var favs = getFavoris();
+    favs.unshift({
+      id: Date.now(),
+      name: favName,
+      items: [{nom:meal.nom, calories:meal.calories, proteines:meal.proteines, glucides:meal.glucides, lipides:meal.lipides, fibres:meal.fibres||0}],
+      calories: meal.calories,
+      proteines: meal.proteines,
+      glucides: meal.glucides,
+      lipides: meal.lipides,
+      fibres: meal.fibres||0
+    });
+    setFavoris(favs);
+    renderFavoris();
+    showToast(favName+' ajouté aux favoris');
+    window._pendingFavMeal = null;
+    window._confirmFavOverride = null;
+  };
 }
 
 // ═══ INIT ═══════════════════════════════════════
