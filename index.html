@@ -466,12 +466,52 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
         <svg id="manChev" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="var(--muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div id="manAcc" style="display:none;border-top:1px solid var(--line);padding:16px">
-        <label class="field-label">Aliment ou plat</label>
-        <input type="text" class="field-input" id="manFood" placeholder="Saumon grillé, riz complet...">
-        <div class="fields-2">
-          <div><label class="field-label">Calories (kcal)</label><input type="number" class="field-input" id="manCal" placeholder="450"></div>
-          <div><label class="field-label">Protéines (g)</label><input type="number" class="field-input" id="manPro" placeholder="30"></div>
+
+        <!-- SEARCH BAR + BARCODE -->
+        <div style="display:flex;gap:8px;margin-bottom:4px">
+          <div style="flex:1;position:relative">
+            <input type="text" class="field-input" id="manFood"
+              placeholder="Poulet, Naturaplan, Skyr..."
+              oninput="searchOFF(this.value)"
+              onblur="setTimeout(function(){var ac=document.getElementById('foodAutocomplete');if(ac)ac.style.display='none';},200)"
+              style="margin-bottom:0;padding-right:36px">
+            <div id="offSpinner" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%)">
+              <div class="spin" style="width:16px;height:16px;margin:0"></div>
+            </div>
+          </div>
+          <button onclick="startBarcode()" title="Scanner code-barre"
+            style="padding:0 14px;background:var(--teal);border:none;border-radius:12px;cursor:pointer;display:flex;align-items:center;color:#fff;flex-shrink:0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M3 5v2"/><path d="M3 11v2"/><path d="M3 17v2"/><path d="M21 5v2"/><path d="M21 11v2"/><path d="M21 17v2"/><line x1="7" y1="4" x2="7" y2="20"/><line x1="10" y1="4" x2="10" y2="20"/><line x1="14" y1="4" x2="14" y2="20"/><line x1="17" y1="4" x2="17" y2="20"/></svg>
+          </button>
         </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">3 millions de produits · Open Food Facts</div>
+
+        <!-- AUTOCOMPLETE DROPDOWN -->
+        <div id="foodAutocomplete" style="display:none;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.08)"></div>
+
+        <!-- BARCODE INPUT (hidden) -->
+        <input type="file" id="barcodeInput" accept="image/*" capture="environment" style="display:none" onchange="handleBarcodeImage(event)">
+
+        <!-- SELECTED FOOD INFO -->
+        <div id="manFoodInfo" style="display:none;background:var(--paper2);border-radius:12px;padding:12px 14px;margin-bottom:12px">
+          <div id="manFoodName" style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:4px"></div>
+          <div id="manFoodBrand" style="font-size:12px;color:var(--muted)"></div>
+        </div>
+
+        <!-- QUANTITY -->
+        <label class="field-label">Quantité (g ou ml)</label>
+        <input type="number" class="field-input" id="manQty" placeholder="100" oninput="updateManQty()" style="margin-bottom:14px">
+
+        <!-- MACROS DISPLAY -->
+        <div id="manCalc" style="display:none;margin-bottom:14px"></div>
+
+        <!-- HIDDEN FIELDS -->
+        <input type="hidden" id="manCal" value="0">
+        <input type="hidden" id="manPro" value="0">
+        <input type="hidden" id="manGlu" value="0">
+        <input type="hidden" id="manLip" value="0">
+        <input type="hidden" id="manFib" value="0">
+
         <label class="field-label">Type de repas</label>
         <select class="field-select" id="manMeal"><option>Déjeuner</option><option>Dîner</option><option>Souper</option><option>Collation</option></select>
         <button class="submit-btn" onclick="addManual()">Ajouter au journal</button>
@@ -818,12 +858,30 @@ function delMeal(i){var d=getDay(selDay);d.meals.splice(i,1);saveDay(selDay,d);b
 function delHydro(i){var d=getDay(selDay);d.hydro.splice(i,1);saveDay(selDay,d);renderDay();renderCoach();}
 function addH(qty,type,emoji,label,calories){var d=getDay(selDay);d.hydro.push({qty:qty,type:type,emoji:emoji,label:label,calories:calories});saveDay(selDay,d);renderDay();renderCoach();}
 function addManual(){
-  var nom=document.getElementById('manFood').value.trim();if(!nom)return;
-  var d=getDay(selDay);
-  d.meals.push({nom:nom,calories:parseInt(document.getElementById('manCal').value)||0,proteines:parseInt(document.getElementById('manPro').value)||0,glucides:0,lipides:0,fibres:0,repas:document.getElementById('manMeal').value});
-  saveDay(selDay,d);
-  document.getElementById('manFood').value='';document.getElementById('manCal').value='';document.getElementById('manPro').value='';
-  buildScroll();renderDay();renderCoach();goScreen('today');
+  var nom = document.getElementById('manFood').value.trim();
+  if(!nom) return;
+  var cal  = parseFloat(document.getElementById('manCal').value)||0;
+  var prot = parseFloat(document.getElementById('manPro').value)||0;
+  var gluc = parseFloat(document.getElementById('manGlu').value)||0;
+  var lip  = parseFloat(document.getElementById('manLip').value)||0;
+  var fib  = parseFloat(document.getElementById('manFib').value)||0;
+  var repas = document.getElementById('manMeal').value;
+  var d = getDay(selDay);
+  if(!d.meals) d.meals = [];
+  d.meals.push({nom:nom, calories:cal, proteines:prot, glucides:gluc, lipides:lip, fibres:fib, repas:repas});
+  saveDay(selDay, d);
+  // Reset form
+  document.getElementById('manFood').value = '';
+  document.getElementById('manQty').value = '';
+  document.getElementById('manCal').value = '0';
+  document.getElementById('manPro').value = '0';
+  document.getElementById('manGlu').value = '0';
+  document.getElementById('manLip').value = '0';
+  document.getElementById('manFib').value = '0';
+  var mc = document.getElementById('manCalc');
+  if(mc) mc.style.display = 'none';
+  window._selectedFood = null;
+  buildScroll(); renderDay(); renderCoach(); goScreen('today');
 }
 
 // ═══ SPORT ═════════════════════════════════════
@@ -2018,6 +2076,260 @@ function saveMealAsFavori(idx) {
     window._pendingFavMeal = null;
     window._confirmFavOverride = null;
   };
+}
+
+
+// ═══ BASE ALIMENTS (valeurs pour 100g) ═══════════════
+var FOODS = [
+  // Protéines animales
+  {n:"Blanc de poulet grillé",cal:165,p:31,g:0,l:3.6,f:0},
+  {n:"Escalope de dinde",cal:135,p:29,g:0,l:1.5,f:0},
+  {n:"Steak boeuf 5% MG",cal:150,p:28,g:0,l:5,f:0},
+  {n:"Steak haché 15% MG",cal:220,p:24,g:0,l:14,f:0},
+  {n:"Saumon grillé",cal:206,p:28,g:0,l:10,f:0},
+  {n:"Thon en boite (eau)",cal:110,p:26,g:0,l:1,f:0},
+  {n:"Cabillaud",cal:80,p:18,g:0,l:0.7,f:0},
+  {n:"Crevettes",cal:90,p:19,g:0,l:1.5,f:0},
+  {n:"Oeuf entier",cal:147,p:13,g:0.7,l:10,f:0,u:"pièce",ug:60},
+  {n:"Blanc d’oeuf",cal:52,p:11,g:0.7,l:0.2,f:0},
+  {n:"Jambon cuit dégraissé",cal:110,p:20,g:1.5,l:3,f:0},
+  {n:"Thon frais",cal:144,p:23,g:0,l:5,f:0},
+  // Produits laitiers
+  {n:"Fromage blanc 0%",cal:45,p:8,g:4,l:0.2,f:0},
+  {n:"Yaourt grec nature 0%",cal:57,p:10,g:4,l:0.3,f:0},
+  {n:"Skyr nature",cal:63,p:11,g:4,l:0.2,f:0},
+  {n:"Cottage cheese",cal:98,p:11,g:3.4,l:4,f:0},
+  {n:"Mozzarella",cal:254,p:18,g:2.2,l:20,f:0},
+  {n:"Emmental",cal:390,p:29,g:0,l:30,f:0},
+  {n:"Lait demi-écrémé",cal:46,p:3.2,g:4.8,l:1.5,f:0},
+  {n:"Lait écrémé",cal:34,p:3.4,g:5,l:0.1,f:0},
+  // Végétaux protéinés
+  {n:"Lentilles cuites",cal:116,p:9,g:20,l:0.4,f:8},
+  {n:"Pois chiches cuits",cal:164,p:8.9,g:27,l:2.6,f:7.6},
+  {n:"Haricots rouges cuits",cal:127,p:8.7,g:22,l:0.5,f:6.8},
+  {n:"Edamame",cal:122,p:11,g:10,l:5,f:5},
+  {n:"Tofu ferme",cal:80,p:8,g:1.9,l:4.8,f:0.3},
+  {n:"Tempeh",cal:193,p:19,g:9,l:11,f:4},
+  // Céréales et féculents
+  {n:"Riz complet cuit",cal:112,p:2.6,g:24,l:0.9,f:1.8},
+  {n:"Riz blanc cuit",cal:130,p:2.7,g:28,l:0.3,f:0.4},
+  {n:"Pâtes complètes cuites",cal:124,p:5.3,g:23,l:1.1,f:3.5},
+  {n:"Pâtes blanches cuites",cal:131,p:5,g:25,l:1.1,f:1.8},
+  {n:"Flocons d’avoine",cal:368,p:13,g:58,l:7,f:10},
+  {n:"Quinoa cuit",cal:120,p:4.4,g:22,l:1.9,f:2.8},
+  {n:"Patate douce cuite",cal:86,p:1.6,g:20,l:0.1,f:3},
+  {n:"Pomme de terre cuite",cal:77,p:2,g:17,l:0.1,f:1.8},
+  {n:"Pain complet",cal:247,p:9,g:45,l:3,f:7},
+  {n:"Pain blanc",cal:270,p:8,g:51,l:2.5,f:2.2},
+  {n:"Tresse au beurre",cal:320,p:9,g:55,l:8,f:2},
+  // Fruits
+  {n:"Banane",cal:89,p:1.1,g:23,l:0.3,f:2.6},
+  {n:"Pomme",cal:52,p:0.3,g:14,l:0.2,f:2.4},
+  {n:"Orange",cal:47,p:0.9,g:12,l:0.1,f:2.4},
+  {n:"Fraises",cal:32,p:0.7,g:7.7,l:0.3,f:2},
+  {n:"Myrtilles",cal:57,p:0.7,g:14,l:0.3,f:2.4},
+  {n:"Avocat",cal:160,p:2,g:9,l:15,f:7},
+  {n:"Kiwi",cal:61,p:1.1,g:15,l:0.5,f:3},
+  {n:"Mangue",cal:60,p:0.8,g:15,l:0.4,f:1.6},
+  // Légumes
+  {n:"Brocolis cuits",cal:35,p:2.8,g:7,l:0.4,f:3.3},
+  {n:"Épinards cuits",cal:23,p:2.9,g:3.7,l:0.4,f:2.4},
+  {n:"Haricots verts cuits",cal:31,p:1.8,g:7,l:0.2,f:3.4},
+  {n:"Courgette cuite",cal:17,p:1.4,g:3.5,l:0.2,f:1.1},
+  {n:"Carottes crues",cal:41,p:0.9,g:10,l:0.2,f:2.8},
+  {n:"Tomates",cal:18,p:0.9,g:3.9,l:0.2,f:1.2},
+  {n:"Concombre",cal:15,p:0.6,g:3.6,l:0.1,f:0.5},
+  {n:"Salade verte",cal:15,p:1.4,g:2.9,l:0.2,f:1.3},
+  {n:"Champignons",cal:22,p:3.1,g:3.3,l:0.3,f:1},
+  {n:"Poivron rouge",cal:31,p:1,g:6,l:0.3,f:2.1},
+  // Graisses et oléagineux
+  {n:"Huile d’olive",cal:884,p:0,g:0,l:100,f:0},
+  {n:"Amandes",cal:579,p:21,g:22,l:50,f:12.5},
+  {n:"Noix",cal:654,p:15,g:14,l:65,f:6.7},
+  {n:"Beurre de cacahuète",cal:598,p:25,g:20,l:51,f:6},
+  {n:"Graines de chia",cal:486,p:17,g:42,l:31,f:34},
+  // Compléments
+  {n:"Whey protéine (poudre)",cal:380,p:80,g:8,l:4,f:0},
+  {n:"Whey isolate (poudre)",cal:370,p:90,g:2,l:1,f:0},
+  // Plats composés courants
+  {n:"Yaourt bio framboise (Naturaplan)",cal:96,p:3.2,g:14,l:2.4,f:0,u:"pot",ug:125},
+  {n:"Müesli aux fruits",cal:360,p:9,g:63,l:7,f:6},
+  {n:"Granola",cal:450,p:10,g:65,l:17,f:5},
+];
+
+// ── OPEN FOOD FACTS + LOCAL SEARCH ──────────────────
+var _offTimer = null;
+var _offCache = {};
+
+function searchOFF(val) {
+  window._selectedFood = null;
+  var ac = document.getElementById('foodAutocomplete');
+  var sp = document.getElementById('offSpinner');
+  if(!val || val.length < 2) {
+    if(ac) ac.style.display = 'none';
+    return;
+  }
+  // Search local first
+  var local = FOODS.filter(function(f){return f.n.toLowerCase().indexOf(val.toLowerCase())>-1;}).slice(0,4);
+
+  // Debounce API call
+  if(_offTimer) clearTimeout(_offTimer);
+  _offTimer = setTimeout(function(){
+    if(sp) sp.style.display = 'block';
+    var cacheKey = val.toLowerCase();
+    if(_offCache[cacheKey]) {
+      renderOFFResults(local, _offCache[cacheKey]);
+      if(sp) sp.style.display = 'none';
+      return;
+    }
+    var url = 'https://world.openfoodfacts.org/cgi/search.pl?search_terms='
+      + encodeURIComponent(val)
+      + '&search_simple=1&action=process&json=1&page_size=8&fields=product_name,brands,nutriments,serving_size,product_quantity';
+    fetch(url)
+      .then(function(r){return r.json();})
+      .then(function(data){
+        var products = (data.products||[]).filter(function(p){
+          var n = p.nutriments||{};
+          return p.product_name && n['energy-kcal_100g'];
+        }).slice(0,6);
+        _offCache[cacheKey] = products;
+        renderOFFResults(local, products);
+      })
+      .catch(function(){renderOFFResults(local,[]);})
+      .finally(function(){if(sp) sp.style.display='none';});
+  }, 400);
+
+  // Show local results immediately
+  if(local.length) {
+    renderOFFResults(local, []);
+    if(ac) ac.style.display = 'block';
+  }
+}
+
+function renderOFFResults(local, remote) {
+  var ac = document.getElementById('foodAutocomplete');
+  if(!ac) return;
+  var html = '';
+  // Local items
+  if(local.length) {
+    html += '<div style="padding:6px 12px;font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--line)">Ma base</div>';
+    html += local.map(function(f,i){
+      return '<div onclick="selectLocalFood('+i+'_local_'+encodeURIComponent(f.n)+')" data-local="'+encodeURIComponent(JSON.stringify(f))+'"'
+        +' style="padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer;display:flex;justify-content:space-between;align-items:center"'
+        +' onmousedown="selectLocalFoodObj('+JSON.stringify(f).replace(/"/g,'&quot;')+')">'
+        +'<span style="font-size:14px;color:var(--ink)">'+f.n+'</span>'
+        +'<span style="font-size:11px;color:var(--muted)">'+f.cal+' kcal/100g</span>'
+        +'</div>';
+    }).join('');
+  }
+  // Remote items
+  if(remote.length) {
+    html += '<div style="padding:6px 12px;font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--line)">Open Food Facts</div>';
+    html += remote.map(function(p){
+      var n = p.nutriments||{};
+      var cal  = Math.round(n['energy-kcal_100g']||0);
+      var prot = Math.round((n['proteins_100g']||0)*10)/10;
+      var gluc = Math.round((n['carbohydrates_100g']||0)*10)/10;
+      var lip  = Math.round((n['fat_100g']||0)*10)/10;
+      var fib  = Math.round((n['fiber_100g']||0)*10)/10;
+      var name = p.product_name||'';
+      var brand = p.brands||'';
+      var food = {n:name, brand:brand, cal:cal, p:prot, g:gluc, l:lip, f:fib};
+      return '<div style="padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer"'
+        +' onmousedown="selectFoodObj('+JSON.stringify(food).replace(/"/g,'&quot;')+')">'
+        +'<div style="display:flex;justify-content:space-between;align-items:baseline">'
+        +'<span style="font-size:14px;color:var(--ink);font-weight:500">'+name+'</span>'
+        +'<span style="font-size:11px;color:var(--muted);flex-shrink:0;margin-left:8px">'+cal+' kcal/100g</span>'
+        +'</div>'
+        +(brand?'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+brand+'</div>':'')
+        +'</div>';
+    }).join('');
+  }
+  if(!html) { ac.style.display='none'; return; }
+  ac.innerHTML = html;
+  ac.style.display = 'block';
+}
+
+function selectLocalFoodObj(f) {
+  selectFoodObj({n:f.n, brand:'', cal:f.cal, p:f.p, g:f.g, l:f.l, f:f.f||0});
+}
+
+function selectFoodObj(food) {
+  window._selectedFood = food;
+  document.getElementById('manFood').value = food.n;
+  document.getElementById('manQty').value = 100;
+  var fi = document.getElementById('manFoodInfo');
+  var fn = document.getElementById('manFoodName');
+  var fb = document.getElementById('manFoodBrand');
+  if(fi) fi.style.display = 'block';
+  if(fn) fn.textContent = food.n;
+  if(fb) fb.textContent = food.brand ? food.brand : food.cal+' kcal · P '+food.p+'g · G '+food.g+'g · L '+food.l+'g (pour 100g)';
+  var ac = document.getElementById('foodAutocomplete');
+  if(ac) ac.style.display = 'none';
+  updateManQty();
+}
+
+function updateManQty() {
+  var food = window._selectedFood;
+  if(!food) return;
+  var qty = parseFloat(document.getElementById('manQty').value) || 100;
+  var ratio = qty / 100;
+  var cal  = Math.round(food.cal * ratio);
+  var prot = Math.round(food.p   * ratio * 10) / 10;
+  var gluc = Math.round(food.g   * ratio * 10) / 10;
+  var lip  = Math.round(food.l   * ratio * 10) / 10;
+  var fib  = Math.round((food.f||0) * ratio * 10) / 10;
+  var mc = document.getElementById('manCalc');
+  if(mc) {
+    mc.innerHTML = '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">'
+      +'<div style="text-align:center;background:var(--paper2);border-radius:8px;padding:8px 4px"><span style="font-size:16px;font-weight:800;color:var(--red);display:block">'+cal+'</span><span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">kcal</span></div>'
+      +'<div style="text-align:center;background:var(--paper2);border-radius:8px;padding:8px 4px"><span style="font-size:16px;font-weight:800;color:var(--green);display:block">'+prot+'g</span><span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">prot.</span></div>'
+      +'<div style="text-align:center;background:var(--paper2);border-radius:8px;padding:8px 4px"><span style="font-size:16px;font-weight:800;color:var(--amber);display:block">'+gluc+'g</span><span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">gluc.</span></div>'
+      +'<div style="text-align:center;background:var(--paper2);border-radius:8px;padding:8px 4px"><span style="font-size:16px;font-weight:800;color:var(--blue);display:block">'+lip+'g</span><span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">lip.</span></div>'
+      +'<div style="text-align:center;background:var(--paper2);border-radius:8px;padding:8px 4px"><span style="font-size:16px;font-weight:800;color:var(--teal);display:block">'+fib+'g</span><span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">fibres</span></div>'
+      +'</div>';
+    mc.style.display = 'block';
+  }
+  var set = function(id,v){var e=document.getElementById(id);if(e)e.value=v;};
+  set('manCal',cal); set('manPro',prot); set('manGlu',gluc); set('manLip',lip); set('manFib',fib);
+}
+
+// Barcode scanner
+function startBarcode() {
+  document.getElementById('barcodeInput').click();
+}
+
+function handleBarcodeImage(ev) {
+  var file = ev.target.files[0];
+  if(!file) return;
+  // Use Open Food Facts barcode search via URL prompt as fallback
+  var code = prompt('Code-barre (13 chiffres) :');
+  if(code) lookupBarcode(code.trim());
+  ev.target.value = '';
+}
+
+function lookupBarcode(code) {
+  if(!code) return;
+  var sp = document.getElementById('offSpinner');
+  if(sp) sp.style.display = 'block';
+  fetch('https://world.openfoodfacts.org/api/v0/product/'+code+'.json')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(sp) sp.style.display = 'none';
+      if(data.status!==1||!data.product) { showToast('Produit non trouvé'); return; }
+      var p = data.product;
+      var n = p.nutriments||{};
+      selectFoodObj({
+        n: p.product_name||'Produit '+code,
+        brand: p.brands||'',
+        cal:  Math.round(n['energy-kcal_100g']||0),
+        p:    Math.round((n['proteins_100g']||0)*10)/10,
+        g:    Math.round((n['carbohydrates_100g']||0)*10)/10,
+        l:    Math.round((n['fat_100g']||0)*10)/10,
+        f:    Math.round((n['fiber_100g']||0)*10)/10
+      });
+    })
+    .catch(function(){if(sp)sp.style.display='none';showToast('Erreur réseau');});
 }
 
 // ═══ INIT ═══════════════════════════════════════
