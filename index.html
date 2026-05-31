@@ -14,6 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
 :root{
@@ -284,6 +285,11 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
 .api-banner-label{font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
 .api-banner-text{font-size:13px;color:var(--muted)}
 .ios-banner-inline{background:var(--ink);color:var(--paper);border-radius:14px;padding:14px 16px;margin:12px 24px;display:none;align-items:center;gap:12px}
+
+.mq-choice{padding:12px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper);cursor:pointer;text-align:center;transition:all .15s;font-family:DM Sans,sans-serif;width:100%}
+.mq-choice:active{transform:scale(.97)}
+.mq-choice.sel{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+.mq-choice.sel div{color:var(--paper)!important}
 </style>
 </head>
 <body>
@@ -479,7 +485,7 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
               <div class="spin" style="width:16px;height:16px;margin:0"></div>
             </div>
           </div>
-          <button onclick="startBarcode()" title="Scanner code-barre"
+          <button onclick="startBarcodeScanner()" title="Scanner code-barre"
             style="padding:0 14px;background:var(--teal);border:none;border-radius:12px;cursor:pointer;display:flex;align-items:center;color:#fff;flex-shrink:0">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M3 5v2"/><path d="M3 11v2"/><path d="M3 17v2"/><path d="M21 5v2"/><path d="M21 11v2"/><path d="M21 17v2"/><line x1="7" y1="4" x2="7" y2="20"/><line x1="10" y1="4" x2="10" y2="20"/><line x1="14" y1="4" x2="14" y2="20"/><line x1="17" y1="4" x2="17" y2="20"/></svg>
           </button>
@@ -489,8 +495,6 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
         <!-- AUTOCOMPLETE DROPDOWN -->
         <div id="foodAutocomplete" style="display:none;background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.08)"></div>
 
-        <!-- BARCODE INPUT (hidden) -->
-        <input type="file" id="barcodeInput" accept="image/*" capture="environment" style="display:none" onchange="handleBarcodeImage(event)">
 
         <!-- SELECTED FOOD INFO -->
         <div id="manFoodInfo" style="display:none;background:var(--paper2);border-radius:12px;padding:12px 14px;margin-bottom:12px">
@@ -657,6 +661,11 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
   </div>
 
   <div class="settings-section">
+    <div class="settings-section-label">Objectif mensuel</div>
+    <div class="info-note">Questionnaire automatique le 1er du mois. Vous pouvez aussi le lancer manuellement.</div>
+    <button class="sr-save" onclick="openMonthlyModal();goScreen('today')" style="background:var(--teal);margin-top:8px">Lancer le questionnaire mensuel</button>
+  </div>
+  <div class="settings-section">
     <div class="settings-section-label">Icône iPhone</div>
     <div class="info-note">1. Ouvrir dans Safari — 2. Bouton Partager — 3. Sur l'ecran d'accueil</div>
   </div>
@@ -735,7 +744,7 @@ function goScreen(id){
   var nb=document.getElementById('nav-'+id);if(nb)nb.classList.add('on');
   if(id==='cal')renderCal();
   if(id==='analyse'){renderFavoris();}
-  if(id==='bilan')calcScore();
+  if(id==='bilan'){calcScore();showBilanView('day');}
   if(id==='today'){renderCoach();renderDay();}
   if(id==='settings'){loadSettings();renderObjectifProgress();}
   window.scrollTo(0,0);
@@ -2184,14 +2193,16 @@ function searchOFF(val) {
     }
     var url = 'https://world.openfoodfacts.org/cgi/search.pl?search_terms='
       + encodeURIComponent(val)
-      + '&search_simple=1&action=process&json=1&page_size=8&fields=product_name,brands,nutriments,serving_size,product_quantity';
+      + '&action=process&json=1&page_size=20'
+      + '&tagtype_0=languages&tag_contains_0=contains&tag_0=fr'
+      + '&fields=product_name,brands,nutriments,product_quantity,serving_size'
+      + '&sort_by=unique_scans_n';
     fetch(url)
       .then(function(r){return r.json();})
       .then(function(data){
         var products = (data.products||[]).filter(function(p){
-          var n = p.nutriments||{};
-          return p.product_name && n['energy-kcal_100g'];
-        }).slice(0,6);
+          return p.product_name && p.product_name.length > 1;
+        }).slice(0,10);
         _offCache[cacheKey] = products;
         renderOFFResults(local, products);
       })
@@ -2227,19 +2238,20 @@ function renderOFFResults(local, remote) {
     html += '<div style="padding:6px 12px;font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--line)">Open Food Facts</div>';
     html += remote.map(function(p){
       var n = p.nutriments||{};
-      var cal  = Math.round(n['energy-kcal_100g']||0);
-      var prot = Math.round((n['proteins_100g']||0)*10)/10;
-      var gluc = Math.round((n['carbohydrates_100g']||0)*10)/10;
-      var lip  = Math.round((n['fat_100g']||0)*10)/10;
-      var fib  = Math.round((n['fiber_100g']||0)*10)/10;
+      var cal  = Math.round(n['energy-kcal_100g'] || (n['energy-kcal']||0)/10 || 0);
+      var prot = Math.round((n['proteins_100g']||n['proteins']||0)*10)/10;
+      var gluc = Math.round((n['carbohydrates_100g']||n['carbohydrates']||0)*10)/10;
+      var lip  = Math.round((n['fat_100g']||n['fat']||0)*10)/10;
+      var fib  = Math.round((n['fiber_100g']||n['fiber']||0)*10)/10;
       var name = p.product_name||'';
-      var brand = p.brands||'';
+      var brand = p.brands ? p.brands.split(',')[0].trim() : '';
       var food = {n:name, brand:brand, cal:cal, p:prot, g:gluc, l:lip, f:fib};
+      var calStr = cal > 0 ? cal+' kcal/100g' : 'données partielles';
       return '<div style="padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer"'
         +' onmousedown="selectFoodObj('+JSON.stringify(food).replace(/"/g,'&quot;')+')">'
         +'<div style="display:flex;justify-content:space-between;align-items:baseline">'
         +'<span style="font-size:14px;color:var(--ink);font-weight:500">'+name+'</span>'
-        +'<span style="font-size:11px;color:var(--muted);flex-shrink:0;margin-left:8px">'+cal+' kcal/100g</span>'
+        +'<span style="font-size:11px;color:var(--muted);flex-shrink:0;margin-left:8px">'+calStr+'</span>'
         +'</div>'
         +(brand?'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+brand+'</div>':'')
         +'</div>';
@@ -2294,42 +2306,612 @@ function updateManQty() {
   set('manCal',cal); set('manPro',prot); set('manGlu',gluc); set('manLip',lip); set('manFib',fib);
 }
 
-// Barcode scanner
-function startBarcode() {
-  document.getElementById('barcodeInput').click();
+// ── BARCODE SCANNER (ZXing) ──────────────────────
+var _scanner = null;
+
+function startBarcodeScanner() {
+  var modal = document.getElementById('scannerModal');
+  if(modal) modal.style.display = 'block';
+  var video = document.getElementById('scannerVideo');
+  var status = document.getElementById('scannerStatus');
+
+  // Check ZXing available
+  if(typeof ZXing === 'undefined') {
+    if(status) status.textContent = 'Scanner non disponible — saisie manuelle';
+    setTimeout(function(){
+      stopBarcodeScanner();
+      var code = prompt('Code-barre (13 chiffres) :');
+      if(code) lookupBarcode(code.trim());
+    }, 1000);
+    return;
+  }
+
+  try {
+    var hints = new Map();
+    var formats = [
+      ZXing.BarcodeFormat.EAN_13,
+      ZXing.BarcodeFormat.EAN_8,
+      ZXing.BarcodeFormat.CODE_128,
+      ZXing.BarcodeFormat.UPC_A
+    ];
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
+    _scanner = new ZXing.BrowserMultiFormatReader(hints);
+    if(status) status.textContent = 'Initialisation...';
+
+    _scanner.decodeFromConstraints(
+      {video:{facingMode:'environment'}},
+      video,
+      function(result, err) {
+        if(result) {
+          var code = result.getText();
+          if(status) status.textContent = 'Code detecté : '+code;
+          stopBarcodeScanner();
+          lookupBarcode(code);
+        }
+      }
+    );
+    if(status) status.textContent = 'Pointez sur le code-barre';
+  } catch(e) {
+    if(status) status.textContent = 'Erreur caméra';
+    setTimeout(stopBarcodeScanner, 2000);
+  }
 }
 
-function handleBarcodeImage(ev) {
-  var file = ev.target.files[0];
-  if(!file) return;
-  // Use Open Food Facts barcode search via URL prompt as fallback
-  var code = prompt('Code-barre (13 chiffres) :');
-  if(code) lookupBarcode(code.trim());
-  ev.target.value = '';
+function stopBarcodeScanner() {
+  if(_scanner) {
+    try { _scanner.reset(); } catch(e) {}
+    _scanner = null;
+  }
+  var modal = document.getElementById('scannerModal');
+  if(modal) modal.style.display = 'none';
+  var video = document.getElementById('scannerVideo');
+  if(video && video.srcObject) {
+    video.srcObject.getTracks().forEach(function(t){t.stop();});
+    video.srcObject = null;
+  }
 }
 
 function lookupBarcode(code) {
   if(!code) return;
   var sp = document.getElementById('offSpinner');
   if(sp) sp.style.display = 'block';
+  showToast('Recherche : '+code+'...');
   fetch('https://world.openfoodfacts.org/api/v0/product/'+code+'.json')
     .then(function(r){return r.json();})
     .then(function(data){
       if(sp) sp.style.display = 'none';
-      if(data.status!==1||!data.product) { showToast('Produit non trouvé'); return; }
+      if(data.status!==1||!data.product) { showToast('Produit non trouvé dans la base'); return; }
       var p = data.product;
       var n = p.nutriments||{};
+      var name = p.product_name_fr || p.product_name || 'Produit '+code;
       selectFoodObj({
-        n: p.product_name||'Produit '+code,
-        brand: p.brands||'',
-        cal:  Math.round(n['energy-kcal_100g']||0),
-        p:    Math.round((n['proteins_100g']||0)*10)/10,
-        g:    Math.round((n['carbohydrates_100g']||0)*10)/10,
-        l:    Math.round((n['fat_100g']||0)*10)/10,
-        f:    Math.round((n['fiber_100g']||0)*10)/10
+        n:     name,
+        brand: p.brands ? p.brands.split(',')[0].trim() : '',
+        cal:   Math.round(n['energy-kcal_100g']||0),
+        p:     Math.round((n['proteins_100g']||0)*10)/10,
+        g:     Math.round((n['carbohydrates_100g']||0)*10)/10,
+        l:     Math.round((n['fat_100g']||0)*10)/10,
+        f:     Math.round((n['fiber_100g']||0)*10)/10
       });
+      // Open manual accordion if not open
+      var acc = document.getElementById('manAcc');
+      if(acc && acc.style.display !== 'block') {
+        toggleAcc('manAcc','manChev');
+      }
+      showToast(name+' trouvé !');
     })
-    .catch(function(){if(sp)sp.style.display='none';showToast('Erreur réseau');});
+    .catch(function(){
+      if(sp) sp.style.display='none';
+      showToast('Erreur réseau');
+    });
+}
+
+
+// ═══ QUESTIONNAIRE MENSUEL ════════════════════════
+var _mqActivity = 1.2;
+var _mqGoal = 'perte';
+var _mqRythme = 0.5;
+
+function getMensuel() {
+  try { return JSON.parse(localStorage.getItem('nMensuel')||'{}'); } catch(e) { return {}; }
+}
+function setMensuel(d) {
+  localStorage.setItem('nMensuel', JSON.stringify(d));
+}
+
+function checkMonthlyModal() {
+  var now = new Date();
+  var day = now.getDate();
+  var monthKey = now.getFullYear()+'-'+(now.getMonth()+1);
+  var mensuel = getMensuel();
+
+  // Last day of month check
+  var lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  if(day === lastDay && mensuel.monthKey === monthKey && !mensuel.bilanDone) {
+    showMonthlyBilan(mensuel);
+    return;
+  }
+
+  // First day of month — show questionnaire if not done for this month
+  if(day === 1 && mensuel.monthKey !== monthKey) {
+    showMonthlyQuestionnaire(false);
+    return;
+  }
+
+  // Manual trigger via settings
+}
+
+function showMonthlyQuestionnaire(isNewMonth) {
+  var now = new Date();
+  var MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  var label = MONTHS[now.getMonth()]+' '+now.getFullYear();
+  document.getElementById('mqMonthLabel').textContent = label;
+  document.getElementById('mqTitle').textContent = isNewMonth ? 'Objectifs de '+MONTHS[now.getMonth()] : 'Objectifs du mois';
+  document.getElementById('mqSubtitle').textContent = 'Prenons 2 minutes pour calibrer votre nutrition.';
+
+  // Pre-fill with existing data
+  var mensuel = getMensuel();
+  var G = getGoals();
+  if(mensuel.poids) document.getElementById('mqPoids').value = mensuel.poids;
+  else document.getElementById('mqPoids').value = 83;
+  document.getElementById('mqTaille').value = mensuel.taille||180;
+  document.getElementById('mqAge').value = mensuel.age||42;
+
+  document.getElementById('mqStep1').style.display = 'block';
+  document.getElementById('mqStep2').style.display = 'none';
+  document.getElementById('mqBilan').style.display = 'none';
+  document.getElementById('monthlyModal').style.display = 'block';
+}
+
+function showMonthlyBilan(mensuel) {
+  var now = new Date();
+  var MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+  // Calculate month stats
+  var s = getStore();
+  var totalDays = 0, totalCals = 0, totalSport = 0;
+  for(var d=1; d<=now.getDate(); d++) {
+    var k = now.getFullYear()+'-'+(now.getMonth()+1)+'-'+d;
+    if(s[k] && s[k].meals && s[k].meals.length) {
+      totalDays++;
+      totalCals += s[k].meals.reduce(function(a,m){return a+(m.calories||0);},0);
+      totalSport += (s[k].sport||[]).length;
+    }
+  }
+  var avgCals = totalDays ? Math.round(totalCals/totalDays) : 0;
+  var deficit = mensuel.cals ? Math.round((mensuel.cals - avgCals)*totalDays) : 0;
+  var kgPerdus = Math.round(deficit/7700*10)/10;
+
+  document.getElementById('mqTitle').textContent = 'Bilan de '+MONTHS[now.getMonth()];
+  document.getElementById('mqSubtitle').textContent = 'Votre mois en chiffres.';
+
+  var html = '';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">';
+  html += '<div style="background:var(--paper2);border-radius:12px;padding:14px;text-align:center"><div style="font-family:DM Serif Display,serif;font-size:28px;color:var(--ink)">'+totalDays+'</div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:4px">Jours loggués</div></div>';
+  html += '<div style="background:var(--paper2);border-radius:12px;padding:14px;text-align:center"><div style="font-family:DM Serif Display,serif;font-size:28px;color:var(--ink)">'+avgCals+'</div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:4px">Kcal moy./jour</div></div>';
+  html += '<div style="background:var(--paper2);border-radius:12px;padding:14px;text-align:center"><div style="font-family:DM Serif Display,serif;font-size:28px;color:var(--teal)">'+totalSport+'</div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:4px">Sessions sport</div></div>';
+  html += '<div style="background:'+(kgPerdus>=0?'#EEF8F3':'#FBE8E6')+';border-radius:12px;padding:14px;text-align:center"><div style="font-family:DM Serif Display,serif;font-size:28px;color:'+(kgPerdus>=0?'var(--teal)':'var(--red)')+'">~'+Math.abs(kgPerdus)+'kg</div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:4px">'+(kgPerdus>=0?'Estimé perdu':'Estimé pris')+'</div></div>';
+  html += '</div>';
+
+  if(mensuel.poids && kgPerdus > 0) {
+    var newPoids = Math.round((mensuel.poids - kgPerdus)*10)/10;
+    html += '<div style="padding:14px;background:var(--paper2);border-radius:12px;margin-bottom:16px;text-align:center">';
+    html += '<div style="font-size:13px;color:var(--muted);margin-bottom:6px">Poids estimé maintenant</div>';
+    html += '<div style="font-family:DM Serif Display,serif;font-size:32px;color:var(--ink)">~'+newPoids+' kg</div>';
+    html += '</div>';
+  }
+
+  document.getElementById('mqBilanContent').innerHTML = html;
+  document.getElementById('mqStep1').style.display = 'none';
+  document.getElementById('mqStep2').style.display = 'none';
+  document.getElementById('mqBilan').style.display = 'block';
+  document.getElementById('monthlyModal').style.display = 'block';
+
+  // Mark bilan done
+  var m2 = getMensuel();
+  m2.bilanDone = true;
+  setMensuel(m2);
+}
+
+function mqStartNewMonth() {
+  document.getElementById('mqBilan').style.display = 'none';
+  showMonthlyQuestionnaire(true);
+}
+
+function mqSelectActivity(btn) {
+  document.querySelectorAll('#mqActivityGrid .mq-choice').forEach(function(b){b.classList.remove('sel');});
+  btn.classList.add('sel');
+  _mqActivity = parseFloat(btn.dataset.val);
+}
+
+function mqSelectGoal(btn) {
+  document.querySelectorAll('[data-goal]').forEach(function(b){b.classList.remove('sel');});
+  btn.classList.add('sel');
+  _mqGoal = btn.dataset.goal;
+  var detail = document.getElementById('mqGoalDetail');
+  if(detail) detail.style.display = (_mqGoal !== 'maintien') ? 'block' : 'none';
+  var lbl = document.getElementById('mqGoalDetailLabel');
+  if(lbl) lbl.textContent = _mqGoal === 'prise' ? 'Poids cible (kg)' : 'Poids cible (kg)';
+}
+
+function mqSelectRythme(btn) {
+  document.querySelectorAll('[data-rythme]').forEach(function(b){b.classList.remove('sel');});
+  btn.classList.add('sel');
+  _mqRythme = parseFloat(btn.dataset.rythme);
+}
+
+function mqCompute() {
+  var poids = parseFloat(document.getElementById('mqPoids').value)||83;
+  var taille = parseFloat(document.getElementById('mqTaille').value)||180;
+  var age = parseFloat(document.getElementById('mqAge').value)||42;
+
+  // Mifflin-St Jeor (homme)
+  var bmr = Math.round(10*poids + 6.25*taille - 5*age + 5);
+  var tdee = Math.round(bmr * _mqActivity);
+
+  // Déficit/surplus selon objectif
+  var deficitSem = 0;
+  if(_mqGoal === 'perte') deficitSem = Math.round(_mqRythme * 7700 / 7); // kcal/j
+  else if(_mqGoal === 'prise') deficitSem = -300; // surplus
+  var calsJour = tdee - deficitSem;
+
+  // Protéines : 2g/kg en perte, 1.8g/kg maintien, 2.2g/kg prise
+  var protFactor = _mqGoal === 'prise' ? 2.2 : _mqGoal === 'perte' ? 2 : 1.8;
+  var prot = Math.round(poids * protFactor);
+
+  // Glucides et lipides
+  var calFromProt = prot * 4;
+  var calFromLip = Math.round(calsJour * 0.25);
+  var lip = Math.round(calFromLip / 9);
+  var calFromGluc = calsJour - calFromProt - calFromLip;
+  var gluc = Math.round(Math.max(0, calFromGluc) / 4);
+
+  // Perte mensuelle estimée
+  var perteMois = _mqGoal === 'perte' ? Math.round(_mqRythme * 4.33 * 10) / 10 : 0;
+  var poidsCible = parseFloat(document.getElementById('mqPoidsCible').value)||0;
+
+  // Display results
+  var ACTIVITY_LABELS = {1.2:'Sédentaire',1.375:'Légèrement actif',1.55:'Modérément actif',1.725:'Très actif'};
+  var GOAL_LABELS = {perte:'Perte de graisse',maintien:'Maintien',prise:'Prise de muscle'};
+
+  var html = '';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">';
+  html += '<div style="background:var(--paper2);border-radius:12px;padding:12px;text-align:center"><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">BMR</div><div style="font-family:DM Serif Display,serif;font-size:22px;color:var(--ink)">'+bmr+'</div><div style="font-size:10px;color:var(--muted)">kcal au repos</div></div>';
+  html += '<div style="background:var(--paper2);border-radius:12px;padding:12px;text-align:center"><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">TDEE</div><div style="font-family:DM Serif Display,serif;font-size:22px;color:var(--ink)">'+tdee+'</div><div style="font-size:10px;color:var(--muted)">dépense réelle</div></div>';
+  html += '</div>';
+
+  html += '<div style="background:var(--ink);border-radius:14px;padding:18px;margin-bottom:16px;text-align:center">';
+  html += '<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Votre objectif calorique</div>';
+  html += '<div style="font-family:DM Serif Display,serif;font-size:48px;color:#fff;letter-spacing:-2px;line-height:1">'+calsJour+'</div>';
+  html += '<div style="font-size:14px;color:rgba(255,255,255,.6);margin-top:4px">kcal par jour</div>';
+  if(deficitSem > 0) html += '<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:6px">Déficit de '+deficitSem+' kcal/j · ~'+perteMois+'kg/mois</div>';
+  html += '</div>';
+
+  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">';
+  html += '<div style="background:#EEF8F3;border-radius:10px;padding:10px;text-align:center"><div style="font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Protéines</div><div style="font-size:20px;font-weight:800;color:var(--teal)">'+prot+'g</div></div>';
+  html += '<div style="background:#FBF0E0;border-radius:10px;padding:10px;text-align:center"><div style="font-size:10px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Glucides</div><div style="font-size:20px;font-weight:800;color:var(--amber)">'+gluc+'g</div></div>';
+  html += '<div style="background:#EEF0FB;border-radius:10px;padding:10px;text-align:center"><div style="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Lipides</div><div style="font-size:20px;font-weight:800;color:var(--blue)">'+lip+'g</div></div>';
+  html += '</div>';
+
+  if(poidsCible && _mqGoal !== 'maintien') {
+    var kgTotal = Math.abs(poids - poidsCible);
+    var semainesTotal = Math.round(kgTotal / _mqRythme);
+    html += '<div style="padding:12px 14px;background:var(--paper2);border-radius:10px;font-size:13px;color:var(--muted);line-height:1.6">';
+    html += 'Pour atteindre <strong style="color:var(--ink)">'+poidsCible+'kg</strong> : environ <strong style="color:var(--ink)">'+semainesTotal+' semaines</strong> ('+Math.round(semainesTotal/4.33)+' mois) à ce rythme.';
+    html += '</div>';
+  }
+
+  document.getElementById('mqResults').innerHTML = html;
+  document.getElementById('mqFinalCal').value = calsJour;
+  document.getElementById('mqFinalProt').value = prot;
+
+  // Store temp values
+  window._mqCalc = {poids:poids, taille:taille, age:age, tdee:tdee, bmr:bmr, cals:calsJour, prot:prot, gluc:gluc, lip:lip, activity:_mqActivity, goal:_mqGoal};
+
+  document.getElementById('mqStep1').style.display = 'none';
+  document.getElementById('mqStep2').style.display = 'block';
+}
+
+function mqSave() {
+  var calc = window._mqCalc||{};
+  var finalCal  = parseInt(document.getElementById('mqFinalCal').value)||calc.cals||1750;
+  var finalProt = parseInt(document.getElementById('mqFinalProt').value)||calc.prot||160;
+
+  // Update goals
+  var gluc = calc.gluc||140;
+  var lip  = calc.lip||60;
+  localStorage.setItem('nGoals', JSON.stringify({cals:finalCal, prot:finalProt, gluc:gluc, lip:lip, fib:30}));
+
+  // Save monthly data
+  var now = new Date();
+  var monthKey = now.getFullYear()+'-'+(now.getMonth()+1);
+  setMensuel({
+    monthKey: monthKey,
+    poids: calc.poids,
+    taille: calc.taille,
+    age: calc.age,
+    tdee: calc.tdee,
+    cals: finalCal,
+    prot: finalProt,
+    gluc: gluc,
+    lip: lip,
+    goal: calc.goal,
+    activity: calc.activity,
+    savedAt: new Date().toISOString(),
+    bilanDone: false
+  });
+
+  // Close modal and refresh
+  document.getElementById('monthlyModal').style.display = 'none';
+  renderDay();
+  renderCoach();
+  showToast('Objectifs de '+finalCal+' kcal/j enregistrés');
+}
+
+function openMonthlyModal() {
+  var mensuel = getMensuel();
+  var now = new Date();
+  var lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  if(now.getDate() === lastDay && mensuel.bilanDone === false) {
+    showMonthlyBilan(mensuel);
+  } else {
+    showMonthlyQuestionnaire(false);
+  }
+}
+
+
+// ═══ BILAN MENSUEL ══════════════════════════════
+var _bilanMonth = new Date().getMonth();
+var _bilanYear  = new Date().getFullYear();
+var MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+function showBilanView(view) {
+  var dayView   = document.getElementById('bilanDayView');
+  var monthView = document.getElementById('bilanMonthView');
+  var tabDay    = document.getElementById('bilanTabDay');
+  var tabMonth  = document.getElementById('bilanTabMonth');
+  if(view === 'day') {
+    dayView.style.display   = 'block';
+    monthView.style.display = 'none';
+    tabDay.style.background   = 'var(--ink)';   tabDay.style.color   = 'var(--paper)';  tabDay.style.borderColor   = 'var(--ink)';
+    tabMonth.style.background = 'none';         tabMonth.style.color = 'var(--muted)';  tabMonth.style.borderColor = 'var(--line)';
+    calcScore();
+  } else {
+    dayView.style.display   = 'none';
+    monthView.style.display = 'block';
+    tabDay.style.background   = 'none';         tabDay.style.color   = 'var(--muted)';  tabDay.style.borderColor   = 'var(--line)';
+    tabMonth.style.background = 'var(--ink)';   tabMonth.style.color = 'var(--paper)';  tabMonth.style.borderColor = 'var(--ink)';
+    renderBilanMonth();
+    renderBilanHistory();
+  }
+}
+
+function bilanNavMonth(dir) {
+  _bilanMonth += dir;
+  if(_bilanMonth > 11) { _bilanMonth = 0; _bilanYear++; }
+  if(_bilanMonth < 0)  { _bilanMonth = 11; _bilanYear--; }
+  renderBilanMonth();
+}
+
+function renderBilanMonth() {
+  var lbl = document.getElementById('bilanMonthLabel');
+  if(lbl) lbl.textContent = MONTHS_FR[_bilanMonth]+' '+_bilanYear;
+
+  var s = getStore();
+  var G = getGoals();
+  var dim = new Date(_bilanYear, _bilanMonth+1, 0).getDate();
+  var now = new Date();
+  var maxDay = (_bilanYear === now.getFullYear() && _bilanMonth === now.getMonth()) ? now.getDate() : dim;
+
+  var days=0, totCal=0, totProt=0, totGluc=0, totLip=0, totEau=0, totSport=0, totBurned=0;
+  for(var d=1; d<=maxDay; d++) {
+    var k = _bilanYear+'-'+(_bilanMonth+1)+'-'+d;
+    var data = s[k];
+    if(!data || !data.meals || !data.meals.length) continue;
+    days++;
+    totCal   += data.meals.reduce(function(a,m){return a+(m.calories||0);},0);
+    totProt  += data.meals.reduce(function(a,m){return a+(m.proteines||0);},0);
+    totGluc  += data.meals.reduce(function(a,m){return a+(m.glucides||0);},0);
+    totLip   += data.meals.reduce(function(a,m){return a+(m.lipides||0);},0);
+    totEau   += (data.hydro||[]).filter(function(h){return h.type!=='alcool';}).reduce(function(a,h){return a+h.qty;},0);
+    totSport += (data.sport||[]).length;
+    totBurned+= (data.sport||[]).reduce(function(a,sp){return a+(sp.burned||0);},0);
+  }
+
+  var avgCal  = days ? Math.round(totCal/days)  : 0;
+  var avgProt = days ? Math.round(totProt/days)  : 0;
+  var avgEau  = days ? Math.round(totEau/days*10)/10 : 0;
+  var deficit = days && G.cals ? Math.round((G.cals - avgCal)*days) : 0;
+  var kgEst   = Math.round(deficit/7700*10)/10;
+
+  var el = document.getElementById('bilanMonthStats');
+  if(!el) return;
+
+  if(!days) {
+    el.innerHTML = '<div style="text-align:center;padding:32px 0;color:var(--muted);font-size:14px">Aucune donnée pour ce mois.</div>';
+    return;
+  }
+
+  var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
+  var cells = [
+    {v:days+'/'+dim, l:'Jours loggués', c:'var(--ink)'},
+    {v:avgCal+' kcal', l:'Moyenne/jour', c:'var(--red)'},
+    {v:avgProt+'g', l:'Protéines moy.', c:'var(--green)'},
+    {v:avgEau+'L', l:'Eau moyenne', c:'var(--teal)'},
+    {v:totSport+' sessions', l:'Sport', c:'var(--ink)'},
+    {v:totBurned+' kcal', l:'Brûlées sport', c:'var(--amber)'}
+  ];
+  cells.forEach(function(cell){
+    html += '<div style="background:var(--paper2);border-radius:12px;padding:14px;text-align:center">'
+      +'<div style="font-family:DM Serif Display,serif;font-size:22px;color:'+cell.c+';line-height:1">'+cell.v+'</div>'
+      +'<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:4px">'+cell.l+'</div>'
+      +'</div>';
+  });
+  html += '</div>';
+
+  // Déficit/surplus
+  if(deficit !== 0) {
+    var isPos = deficit > 0;
+    html += '<div style="background:'+(isPos?'#EEF8F3':'#FBE8E6')+';border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">'
+      +'<div><div style="font-size:13px;font-weight:700;color:var(--ink)">Déficit cumulé estimé</div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-top:2px">'+Math.abs(deficit)+' kcal · ~'+Math.abs(kgEst)+'kg '+(isPos?'perdu':'pris')+'</div></div>'
+      +'<div style="font-family:DM Serif Display,serif;font-size:28px;color:'+(isPos?'var(--teal)':'var(--red)')+'">'+Math.abs(kgEst)+'kg</div>'
+      +'</div>';
+  }
+
+  el.innerHTML = html;
+
+  // Load saved IA bilan if exists
+  var savedBilan = getSavedBilan(_bilanYear, _bilanMonth);
+  var iaEl = document.getElementById('bilanMonthIA');
+  if(savedBilan && iaEl) {
+    iaEl.innerHTML = renderSavedBilan(savedBilan);
+  } else if(iaEl) {
+    iaEl.innerHTML = '';
+  }
+}
+
+function getSavedBilan(year, month) {
+  try {
+    var key = 'bilan_'+year+'_'+month;
+    var raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+
+function saveBilan(year, month, data) {
+  try {
+    localStorage.setItem('bilan_'+year+'_'+month, JSON.stringify(data));
+  } catch(e) {}
+}
+
+function renderSavedBilan(b) {
+  var html = '<div style="border-top:1px solid var(--line);padding-top:16px">';
+  html += '<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Bilan IA · Généré le '+b.date+'</div>';
+  if(b.score !== undefined) {
+    html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">'
+      +'<div style="font-family:DM Serif Display,serif;font-size:36px;color:var(--teal)">'+b.score+'</div>'
+      +'<div style="font-size:13px;color:var(--muted)">/100</div>'
+      +'<div style="flex:1;font-size:14px;font-weight:600;color:var(--ink)">'+b.titre+'</div></div>';
+  }
+  if(b.resume) html += '<div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:12px">'+b.resume+'</div>';
+  if(b.points && b.points.length) {
+    b.points.forEach(function(p){
+      html += '<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)">'
+        +'<div style="width:7px;height:7px;border-radius:50%;background:var(--teal);flex-shrink:0;margin-top:5px"></div>'
+        +'<div style="font-size:13px;color:var(--ink);line-height:1.5">'+p+'</div></div>';
+    });
+  }
+  if(b.next) {
+    html += '<div style="margin-top:12px;padding:12px;background:var(--paper2);border-radius:10px">'
+      +'<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">Mois prochain</div>'
+      +'<div style="font-size:13px;color:var(--ink);line-height:1.5">'+b.next+'</div></div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function genBilanMensuelIA() {
+  var btn = document.getElementById('bilanMonthBtn');
+  if(btn) { btn.textContent = '...'; btn.disabled = true; }
+  var apiKey = getKey();
+  var iaEl = document.getElementById('bilanMonthIA');
+
+  var s = getStore();
+  var G = getGoals();
+  var dim = new Date(_bilanYear, _bilanMonth+1, 0).getDate();
+  var now = new Date();
+  var maxDay = (_bilanYear === now.getFullYear() && _bilanMonth === now.getMonth()) ? now.getDate() : dim;
+
+  var days=0, totCal=0, totProt=0, totSport=0, totBurned=0, alcDays=0;
+  for(var d=1; d<=maxDay; d++) {
+    var k = _bilanYear+'-'+(_bilanMonth+1)+'-'+d;
+    var data = s[k];
+    if(!data||!data.meals||!data.meals.length) continue;
+    days++;
+    totCal   += data.meals.reduce(function(a,m){return a+(m.calories||0);},0);
+    totProt  += data.meals.reduce(function(a,m){return a+(m.proteines||0);},0);
+    totSport += (data.sport||[]).length;
+    totBurned+= (data.sport||[]).reduce(function(a,sp){return a+(sp.burned||0);},0);
+    if((data.hydro||[]).some(function(h){return h.type==='alcool';})) alcDays++;
+  }
+  var avgCal  = days ? Math.round(totCal/days)  : 0;
+  var avgProt = days ? Math.round(totProt/days)  : 0;
+  var deficit = G.cals ? Math.round((G.cals-avgCal)*days) : 0;
+  var kgEst   = Math.round(deficit/7700*10)/10;
+
+  if(!apiKey) {
+    if(iaEl) iaEl.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:12px 0">Clé API manquante — configurez-la dans Paramètres.</div>';
+    if(btn){btn.textContent='Générer le bilan IA du mois';btn.disabled=false;}
+    return;
+  }
+
+  if(iaEl) iaEl.innerHTML = '<div style="text-align:center;padding:20px"><div class="spin"></div><div style="font-size:13px;color:var(--muted);margin-top:8px">Analyse en cours...</div></div>';
+
+  var prompt = 'Nutritionniste expert. Bilan mensuel '+MONTHS_FR[_bilanMonth]+' '+_bilanYear+'.
+'
+    +'Données : '+days+'/'+maxDay+' jours loggués, moy. '+avgCal+' kcal/j (obj:'+G.cals+'), moy. prot '+avgProt+'g, '
+    +totSport+' sessions sport, '+totBurned+' kcal brûlées, '+alcDays+' jours alcool.
+'
+    +'Déficit estimé : '+deficit+' kcal (~'+kgEst+'kg).
+'
+    +'JSON sans backticks : {"score":75,"titre":"En une phrase","resume":"2-3 phrases bilan","points":["point1","point2","point3"],"next":"3 actions concrètes mois prochain"}';
+
+  fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:600,messages:[{role:'user',content:prompt}]})
+  }).then(function(r){return r.json();}).then(function(rd){
+    var txt=(rd.content||[]).find(function(c){return c.type==='text';});
+    var b=JSON.parse((txt?txt.text:'{}').replace(/```json|```/g,'').trim());
+    var today = new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long'});
+    var toSave = {score:b.score,titre:b.titre,resume:b.resume,points:b.points,next:b.next,date:today};
+    saveBilan(_bilanYear, _bilanMonth, toSave);
+    if(iaEl) iaEl.innerHTML = renderSavedBilan(toSave);
+    renderBilanHistory();
+  }).catch(function(){
+    if(iaEl) iaEl.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:12px 0">Erreur — vérifiez votre clé API.</div>';
+  }).finally(function(){
+    if(btn){btn.textContent='Générer le bilan IA du mois';btn.disabled=false;}
+  });
+}
+
+
+function selectBilanMonth(year, month) {
+  if(year===_bilanYear && month===_bilanMonth) return;
+  _bilanYear = year;
+  _bilanMonth = month;
+  renderBilanMonth();
+  showBilanView('month');
+  window.scrollTo(0,0);
+}
+
+function renderBilanHistory() {
+  var el = document.getElementById('bilanHistory');
+  if(!el) return;
+  var bilans = [];
+  for(var y=2025; y<=2030; y++) {
+    for(var m=0; m<12; m++) {
+      var b = getSavedBilan(y, m);
+      if(b) bilans.push({year:y,month:m,data:b});
+    }
+  }
+  bilans.sort(function(a,b){return (b.year*12+b.month)-(a.year*12+a.month);});
+  if(!bilans.length) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--muted)">Aucun bilan sauvegardé.</div>';
+    return;
+  }
+  el.innerHTML = bilans.map(function(b){
+    var isActive = b.year===_bilanYear && b.month===_bilanMonth;
+    return '<div onclick="if(!'+isActive+'){_bilanYear='+b.year+';_bilanMonth='+b.month+';renderBilanMonth();showBilanView('month');window.scrollTo(0,0);}"'
+      +' style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer'+(isActive?';opacity:.4':'')+';">'
+      +'<div>'
+      +'<div style="font-size:14px;font-weight:600;color:var(--ink)">'+MONTHS_FR[b.month]+' '+b.year+'</div>'
+      +(b.data.score!==undefined?'<div style="font-size:12px;color:var(--muted);margin-top:2px">Score '+b.data.score+'/100 · '+b.data.titre+'</div>':'')
+      +'</div>'
+      +'<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" stroke="var(--muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><polyline points="9 18 15 12 9 6"/></svg>'
+      +'</div>';
+  }).join('');
 }
 
 // ═══ INIT ═══════════════════════════════════════
@@ -2343,6 +2925,7 @@ renderDay();
 renderCoach();
 showLearn("prot");
 renderFavoris();
+checkMonthlyModal();
 </script>
 
 <!-- FAVORI MODAL -->
@@ -2367,6 +2950,149 @@ renderFavoris();
 
 <!-- TOAST -->
 <div id="toast" style="position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--ink);color:var(--paper);padding:10px 20px;border-radius:30px;font-size:13px;font-weight:600;font-family:DM Sans,sans-serif;z-index:400;opacity:0;transition:all .3s ease;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(26,26,24,.2)"></div>
+
+
+<!-- QUESTIONNAIRE MENSUEL -->
+<div id="monthlyModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(245,244,240,.97);overflow-y:auto">
+  <div style="max-width:480px;margin:0 auto;padding:32px 24px 80px">
+
+    <!-- Header -->
+    <div style="margin-bottom:32px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px" id="mqMonthLabel">Juin 2026</div>
+      <div style="font-family:DM Serif Display,serif;font-size:32px;color:var(--ink);line-height:1.1" id="mqTitle">Objectifs du mois</div>
+      <div style="font-size:14px;color:var(--muted);margin-top:8px" id="mqSubtitle">Prenons 2 minutes pour calibrer votre nutrition ce mois-ci.</div>
+    </div>
+
+    <!-- Step 1: Corps -->
+    <div id="mqStep1">
+      <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px">Votre corps aujourd'hui</div>
+
+      <label class="field-label">Poids actuel (kg)</label>
+      <input type="number" step="0.1" class="field-input" id="mqPoids" placeholder="83" style="margin-bottom:16px">
+
+      <label class="field-label">Taille (cm)</label>
+      <input type="number" class="field-input" id="mqTaille" placeholder="180" style="margin-bottom:16px">
+
+      <label class="field-label">Âge</label>
+      <input type="number" class="field-input" id="mqAge" placeholder="42" style="margin-bottom:20px">
+
+      <label class="field-label">Niveau d'activité habituel</label>
+      <div id="mqActivityGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px">
+        <button class="mq-choice" data-val="1.2" onclick="mqSelectActivity(this)">
+          <div style="font-size:18px;margin-bottom:4px">🪑</div>
+          <div style="font-size:13px;font-weight:700">Sédentaire</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Bureau, peu de marche</div>
+        </button>
+        <button class="mq-choice" data-val="1.375" onclick="mqSelectActivity(this)">
+          <div style="font-size:18px;margin-bottom:4px">🚶</div>
+          <div style="font-size:13px;font-weight:700">Légèrement actif</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">1-3 sessions/semaine</div>
+        </button>
+        <button class="mq-choice" data-val="1.55" onclick="mqSelectActivity(this)">
+          <div style="font-size:18px;margin-bottom:4px">🏃</div>
+          <div style="font-size:13px;font-weight:700">Modérément actif</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">3-5 sessions/semaine</div>
+        </button>
+        <button class="mq-choice" data-val="1.725" onclick="mqSelectActivity(this)">
+          <div style="font-size:18px;margin-bottom:4px">💪</div>
+          <div style="font-size:13px;font-weight:700">Très actif</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">6-7 sessions/semaine</div>
+        </button>
+      </div>
+
+      <label class="field-label">Objectif ce mois-ci</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:24px">
+        <button class="mq-choice" data-goal="perte" onclick="mqSelectGoal(this)">
+          <div style="font-size:16px;margin-bottom:4px">📉</div>
+          <div style="font-size:12px;font-weight:700">Perdre du gras</div>
+        </button>
+        <button class="mq-choice" data-goal="maintien" onclick="mqSelectGoal(this)">
+          <div style="font-size:16px;margin-bottom:4px">⚖️</div>
+          <div style="font-size:12px;font-weight:700">Maintenir</div>
+        </button>
+        <button class="mq-choice" data-goal="prise" onclick="mqSelectGoal(this)">
+          <div style="font-size:16px;margin-bottom:4px">📈</div>
+          <div style="font-size:12px;font-weight:700">Prendre du muscle</div>
+        </button>
+      </div>
+
+      <div id="mqGoalDetail" style="display:none;margin-bottom:24px">
+        <label class="field-label" id="mqGoalDetailLabel">Poids cible (kg)</label>
+        <input type="number" step="0.1" class="field-input" id="mqPoidsCible" placeholder="75" style="margin-bottom:12px">
+        <label class="field-label">Rythme souhaité</label>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+          <button class="mq-choice" data-rythme="0.25" onclick="mqSelectRythme(this)">
+            <div style="font-size:12px;font-weight:700">Doux</div>
+            <div style="font-size:10px;color:var(--muted)">−0.25kg/sem</div>
+          </button>
+          <button class="mq-choice sel" data-rythme="0.5" onclick="mqSelectRythme(this)">
+            <div style="font-size:12px;font-weight:700">Modéré</div>
+            <div style="font-size:10px;color:var(--muted)">−0.5kg/sem</div>
+          </button>
+          <button class="mq-choice" data-rythme="0.75" onclick="mqSelectRythme(this)">
+            <div style="font-size:12px;font-weight:700">Intense</div>
+            <div style="font-size:10px;color:var(--muted)">−0.75kg/sem</div>
+          </button>
+        </div>
+      </div>
+
+      <button onclick="mqCompute()" style="width:100%;padding:15px;background:var(--ink);color:var(--paper);border:none;border-radius:14px;font-size:16px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer">
+        Calculer mes objectifs →
+      </button>
+    </div>
+
+    <!-- Step 2: Résultat -->
+    <div id="mqStep2" style="display:none">
+      <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:20px">Votre plan pour ce mois</div>
+
+      <div id="mqResults"></div>
+
+      <div style="margin-top:24px;padding:16px;background:var(--paper2);border-radius:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Ajuster si souhaité</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div><label class="field-label">Calories/jour</label><input type="number" class="field-input" id="mqFinalCal" style="margin-bottom:0"></div>
+          <div><label class="field-label">Protéines (g)</label><input type="number" class="field-input" id="mqFinalProt" style="margin-bottom:0"></div>
+        </div>
+      </div>
+
+      <button onclick="mqSave()" style="width:100%;padding:15px;background:var(--teal);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer;margin-top:16px">
+        Valider et commencer le mois ✓
+      </button>
+      <button onclick="document.getElementById('mqStep1').style.display='block';document.getElementById('mqStep2').style.display='none'" style="width:100%;padding:12px;background:none;border:none;font-size:14px;color:var(--muted);cursor:pointer;margin-top:8px;font-family:DM Sans,sans-serif">
+        ← Modifier
+      </button>
+    </div>
+
+    <!-- Bilan fin de mois -->
+    <div id="mqBilan" style="display:none">
+      <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:20px">Bilan du mois écoulé</div>
+      <div id="mqBilanContent"></div>
+      <button onclick="mqStartNewMonth()" style="width:100%;padding:15px;background:var(--ink);color:var(--paper);border:none;border-radius:14px;font-size:16px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer;margin-top:20px">
+        Définir les objectifs du mois suivant →
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- BARCODE SCANNER MODAL -->
+<div id="scannerModal" style="display:none;position:fixed;inset:0;z-index:600;background:#000">
+  <div style="position:relative;width:100%;height:100%">
+    <video id="scannerVideo" style="width:100%;height:100%;object-fit:cover"></video>
+    <!-- Overlay -->
+    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none">
+      <div style="width:260px;height:160px;border:2px solid var(--teal);border-radius:12px;box-shadow:0 0 0 2000px rgba(0,0,0,.5)"></div>
+      <div style="color:#fff;font-size:14px;font-weight:600;margin-top:20px;font-family:DM Sans,sans-serif">Pointez sur le code-barre</div>
+    </div>
+    <!-- Close -->
+    <button onclick="stopBarcodeScanner()" style="position:absolute;top:calc(16px + env(safe-area-inset-top));right:16px;background:rgba(0,0,0,.6);border:none;color:#fff;font-size:18px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <!-- Status -->
+    <div id="scannerStatus" style="position:absolute;bottom:60px;left:0;right:0;text-align:center;color:#fff;font-size:13px;font-family:DM Sans,sans-serif;font-weight:500"></div>
+  </div>
+</div>
 
 </body>
 </html>
