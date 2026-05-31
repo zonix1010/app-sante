@@ -1692,7 +1692,7 @@ function showLearn(key) {
     + '<div class="learn-block"><div class="learn-block-title">Ce qui se passe dans ton corps</div>'
     + chainHtml + '</div>'
     + '<div class="learn-divider"></div>'
-    + '<div class="learn-block"><div class="learn-block-title">Signaux d’alerte</div>'
+    + '<div class="learn-block"><div class="learn-block-title">Signaux d&#x27;alerte</div>'
     + '<div class="signal-card '+d.trop.level+'"><div class="signal-card-title">'+d.trop.title+'</div><div class="signal-card-body">'+d.trop.body+'</div></div>'
     + '<div class="signal-card '+d.pasAssez.level+'"><div class="signal-card-title">'+d.pasAssez.title+'</div><div class="signal-card-body">'+d.pasAssez.body+'</div></div>'
     + '</div>'
@@ -1824,7 +1824,7 @@ function renderBasketVerdict(totCal, totProt, totGluc, totLip) {
   if(totCal > (G.cals||1750)*0.7 && basket.length <= 2) {
     label = 'STOP'; bg='#FBE8E6'; border='var(--red)';
     verdict = 'Ce repas dépasse déjà 70% de ton objectif journalier.';
-    why = 'Tu n’as plus assez de marge pour le reste de la journée. Réduis la portion ou choisis autre chose.';
+    why = 'Tu n\u2019as plus assez de marge. Réduis la portion ou choisis autre chose.';
   } else if(hasPauvre || totCal > 800) {
     label = 'NON'; bg='#FBE8E6'; border='var(--red)';
     verdict = hasPauvre ? 'Un aliment de ce repas est à éviter.' : 'Repas trop calorique pour ton objectif.';
@@ -2848,13 +2848,10 @@ function genBilanMensuelIA() {
 
   if(iaEl) iaEl.innerHTML = '<div style="text-align:center;padding:20px"><div class="spin"></div><div style="font-size:13px;color:var(--muted);margin-top:8px">Analyse en cours...</div></div>';
 
-  var prompt = 'Nutritionniste expert. Bilan mensuel '+MONTHS_FR[_bilanMonth]+' '+_bilanYear+'.
-'
-    +'Données : '+days+'/'+maxDay+' jours loggués, moy. '+avgCal+' kcal/j (obj:'+G.cals+'), moy. prot '+avgProt+'g, '
-    +totSport+' sessions sport, '+totBurned+' kcal brûlées, '+alcDays+' jours alcool.
-'
-    +'Déficit estimé : '+deficit+' kcal (~'+kgEst+'kg).
-'
+  var prompt = 'Nutritionniste expert. Bilan mensuel '+MONTHS_FR[_bilanMonth]+' '+_bilanYear+'. '
++'Données : '+days+'/'+maxDay+' jours loggués, moy. '+avgCal+' kcal/j (obj:'+G.cals+'), moy. prot '+avgProt+'g, '
++totSport+' sessions sport, '+totBurned+' kcal brûlées, '+alcDays+' jours alcool. '
++'Déficit estimé : '+deficit+' kcal (~'+kgEst+'kg). '
     +'JSON sans backticks : {"score":75,"titre":"En une phrase","resume":"2-3 phrases bilan","points":["point1","point2","point3"],"next":"3 actions concrètes mois prochain"}';
 
   fetch('https://api.anthropic.com/v1/messages',{
@@ -2903,7 +2900,7 @@ function renderBilanHistory() {
   }
   el.innerHTML = bilans.map(function(b){
     var isActive = b.year===_bilanYear && b.month===_bilanMonth;
-    return '<div onclick="if(!'+isActive+'){_bilanYear='+b.year+';_bilanMonth='+b.month+';renderBilanMonth();showBilanView('month');window.scrollTo(0,0);}"'
+    return '<div onclick="selectBilanMonth('+b.year+','+b.month+')"'
       +' style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer'+(isActive?';opacity:.4':'')+';">'
       +'<div>'
       +'<div style="font-size:14px;font-weight:600;color:var(--ink)">'+MONTHS_FR[b.month]+' '+b.year+'</div>'
