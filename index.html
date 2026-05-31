@@ -28,9 +28,9 @@
 }
 html{color-scheme:light only}
 body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;overscroll-behavior:none}
-.screen{display:none;min-height:100vh;padding-bottom:90px}
+.screen{display:none;min-height:100vh;padding-bottom:90px;position:relative}
 .screen.active{display:block}
-.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(245,244,240,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-around;padding:8px 0 calc(8px + env(safe-area-inset-bottom));z-index:100}
+.nav{position:fixed;transform:translateZ(0);-webkit-transform:translateZ(0);bottom:0;left:0;right:0;background:rgba(245,244,240,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-around;padding:8px 0 calc(8px + env(safe-area-inset-bottom));z-index:100}
 .nav-btn{display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;cursor:pointer;padding:4px 14px;transition:opacity .15s}
 .nav-btn:active{opacity:.5}
 .nav-icon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s;color:var(--muted)}
@@ -290,6 +290,7 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
 .mq-choice:active{transform:scale(.97)}
 .mq-choice.sel{border-color:var(--ink);background:var(--ink);color:var(--paper)}
 .mq-choice.sel div{color:var(--paper)!important}
+#bilanCorpsView{display:none}
 </style>
 </head>
 <body>
@@ -593,10 +594,10 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
     <div style="display:flex;gap:6px">
       <button id="bilanTabDay" onclick="showBilanView('day')" style="padding:6px 12px;border-radius:20px;border:1.5px solid var(--ink);background:var(--ink);color:var(--paper);font-size:12px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer">Jour</button>
       <button id="bilanTabMonth" onclick="showBilanView('month')" style="padding:6px 12px;border-radius:20px;border:1.5px solid var(--line);background:none;color:var(--muted);font-size:12px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer">Mois</button>
-      <button id="bilanTabSuivi" onclick="showBilanView('suivi')" style="padding:6px 12px;border-radius:20px;border:1.5px solid var(--line);background:none;color:var(--muted);font-size:12px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer">Corps</button>
+      <button id="bilanTabCorps" onclick="showBilanView('corps')" style="padding:6px 12px;border-radius:20px;border:1.5px solid var(--line);background:none;color:var(--muted);font-size:12px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer">Corps</button>
     </div>
   </div>
-  <div id="bilanDayView" style="padding-bottom:80px">
+  <div id="bilanDayView" style="padding:0 24px 80px">
     <div class="score-section" style="margin-top:16px">
       <div class="score-ring">
         <svg width="90" height="90" viewBox="0 0 90 90">
@@ -605,7 +606,7 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
         </svg>
         <div class="score-ring-overlay"><span class="sr-num" id="scoreNum">—</span><span class="sr-max">/100</span></div>
       </div>
-      <div class="score-info"><div class="si-title" id="scoreTitle">Score du jour</div><div class="si-desc" id="scoreDesc">Loggez votre journée pour voir votre score</div></div>
+      <div class="score-info"><div class="si-title" id="scoreTitle">Score du jour</div><div class="si-desc" id="scoreDesc">Score du jour pour voir votre score</div></div>
     </div>
     <button class="bilan-gen-btn" id="bilanBtn" onclick="genBilan()">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
@@ -635,63 +636,20 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
     </div>
   
   <!-- VUE SUIVI CORPO -->
-  <div id="bilanSuiviView" style="display:none;padding:0 24px 80px">
-    <div id="suiviRappel" style="margin:16px 0"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
-      <button onclick="document.getElementById('suiviCamera').click()" style="padding:14px;background:var(--teal);color:#fff;border:none;border-radius:14px;font-size:13px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-        Photo
-      </button>
-      <button onclick="document.getElementById('suiviGallery').click()" style="padding:14px;background:none;color:var(--ink);border:1.5px solid var(--line);border-radius:14px;font-size:13px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-        Galerie
-      </button>
-    </div>
-    <input type="file" id="suiviCamera" accept="image/*" capture="environment" style="display:none" onchange="addSuiviPhoto(event)">
-    <input type="file" id="suiviGallery" accept="image/*" style="display:none" onchange="addSuiviPhoto(event)">
-    <div id="suiviAnalyse" style="display:none;margin-bottom:20px">
-      <button onclick="genSuiviAnalyse()" style="width:100%;padding:13px;background:var(--ink);color:var(--paper);border:none;border-radius:12px;font-size:14px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-        Analyser l'évolution
-      </button>
-      <div id="suiviAnalyseResult" style="margin-top:12px"></div>
-    </div>
-    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">Historique photos</div>
-    <div id="suiviGalleryGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
-    <div id="suiviFullscreen" style="display:none;position:fixed;inset:0;z-index:700;background:#000;align-items:center;justify-content:center">
-      <img id="suiviFullImg" style="max-width:100%;max-height:100%;object-fit:contain">
-      <button onclick="document.getElementById('suiviFullscreen').style.display='none'" style="position:absolute;top:calc(16px + env(safe-area-inset-top));right:16px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.6);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-  </div>
+  
 </div>
 
   <div <div id="bilanCorpsView" style="display:none;padding:20px 24px 80px">
-    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px">Suivi corporel</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
-      <button onclick="document.getElementById('corpsCamera').click()" style="padding:16px 12px;background:var(--teal);color:#fff;border:none;border-radius:14px;font-size:13px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+      <button onclick="document.getElementById('suiviCamB').click()" style="padding:16px 12px;background:var(--teal);color:#fff;border:none;border-radius:14px;font-size:13px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         Prendre une photo
       </button>
-      <button onclick="document.getElementById('corpsGallery').click()" style="padding:16px 12px;background:none;color:var(--ink);border:1.5px solid var(--line);border-radius:14px;font-size:13px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+      <button onclick="document.getElementById('suiviGalB').click()" style="padding:16px 12px;background:none;color:var(--ink);border:1.5px solid var(--line);border-radius:14px;font-size:13px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         Depuis la galerie
       </button>
-    </div>
-    <input type="file" id="corpsCamera" accept="image/*" capture="environment" style="display:none" onchange="corpsPhotoAdded(event)">
-    <input type="file" id="corpsGallery" accept="image/*" style="display:none" onchange="corpsPhotoAdded(event)">
-    <div id="corpsPhotoResult"></div>
-  </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
-      <button onclick="document.getElementById('suiviCamB').click()" style="padding:14px;background:var(--teal);color:#fff;border:none;border-radius:14px;font-size:13px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Photo
-      </button>
-      <button onclick="document.getElementById('suiviGalB').click()" style="padding:14px;background:none;color:var(--ink);border:1.5px solid var(--line);border-radius:14px;font-size:13px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Galerie
-      </button>
-    </div>
-    <input type="file" id="suiviCamB" accept="image/*" capture="environment" style="display:none" onchange="addSuiviPhoto(event);renderCorpsView()">
+        <input type="file" id="suiviCamB" accept="image/*" capture="environment" style="display:none" onchange="addSuiviPhoto(event);renderCorpsView()">
     <input type="file" id="suiviGalB" accept="image/*" style="display:none" onchange="addSuiviPhoto(event);renderCorpsView()">
     <div id="suiviAnalyseB" style="display:none;margin-bottom:16px">
       <button onclick="genSuiviAnalyse()" style="width:100%;padding:13px;background:var(--ink);color:var(--paper);border:none;border-radius:12px;font-size:14px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
@@ -700,12 +658,15 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
       </button>
       <div id="suiviAnalyseResultB" style="margin-top:12px"></div>
     </div>
-    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">Mes photos</div>
+    <div id="corpsPhotosLabel" style="display:none;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">Mes photos</div>
     <div id="suiviGridB" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
     <div id="suiviFsB" onclick="this.style.display='none'" style="display:none;position:fixed;inset:0;z-index:700;background:#000;align-items:center;justify-content:center">
       <img id="suiviFsImgB" style="max-width:100%;max-height:100%;object-fit:contain">
     </div>
-  </div></div>
+  </div>
+</div>
+  </div>
+</div>
 
 <!-- PARAMETRES -->
 <div class="screen" id="screen-settings">
@@ -1460,8 +1421,8 @@ function calcScore(){
   tx('scoreNum',cals>0?sc:'—');
   var arc=document.getElementById('scoreArc');
   if(arc&&cals>0){arc.style.strokeDashoffset=239-(239*sc/100);arc.style.stroke=sc>=80?'var(--green)':sc>=60?'var(--teal)':sc>=40?'var(--amber)':'var(--red)';}
-  tx('scoreTitle',sc>=80?'Journee parfaite':sc>=60?'Bonne journee':sc>=40?'A ameliorer':'Loggez votre journée');
-  tx('scoreDesc',cals>0?(cals+' kcal · '+prot+'g prot · '+eau.toFixed(1)+'L eau'+(sport?' · sport':'')):'Commencez a logger pour voir votre score');
+  tx('scoreTitle',sc>=80?'Journee parfaite':sc>=60?'Bonne journee':sc>=40?'A ameliorer':'Score du jour');
+  tx('scoreDesc',cals>0?(cals+' kcal · '+prot+'g prot · '+eau.toFixed(1)+'L eau'+(sport?' · sport':'')):'Enregistrez vos repas pour voir votre score');
 }
 function genBilan(){
   var btn=document.getElementById('bilanBtn');btn.textContent='...';btn.disabled=true;
