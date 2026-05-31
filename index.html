@@ -585,6 +585,41 @@ body{font-family:DM Sans,system-ui,-apple-system,sans-serif;background:var(--pap
     <div class="sr-ok" id="goalSaved">Objectifs enregistres</div>
   </div>
   <div class="settings-section">
+    <div class="settings-section-label">Objectif mensuel</div>
+    <div class="info-note">Définissez votre objectif pour suivre votre progression réelle.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="setting-row">
+        <span class="sr-label">Poids actuel (kg)</span>
+        <input type="number" step="0.1" class="sr-input" id="gPoidsActuel" placeholder="83">
+      </div>
+      <div class="setting-row">
+        <span class="sr-label">Poids cible (kg)</span>
+        <input type="number" step="0.1" class="sr-input" id="gPoidsCible" placeholder="75">
+      </div>
+      <div class="setting-row">
+        <span class="sr-label">Masse grasse actuelle (%)</span>
+        <input type="number" step="0.1" class="sr-input" id="gGrasseActuel" placeholder="22">
+      </div>
+      <div class="setting-row">
+        <span class="sr-label">Masse grasse cible (%)</span>
+        <input type="number" step="0.1" class="sr-input" id="gGrasseCible" placeholder="15">
+      </div>
+    </div>
+    <div class="setting-row">
+      <span class="sr-label">Échéance</span>
+      <input type="date" class="sr-input" id="gEcheance">
+    </div>
+    <button class="sr-save" onclick="saveObjectif()">Enregistrer</button>
+    <div class="sr-ok" id="objSaved">Objectif enregistré</div>
+  </div>
+
+  <!-- PROGRESSION OBJECTIF -->
+  <div class="settings-section" id="objProgressSection" style="display:none">
+    <div class="settings-section-label">Progression vers l'objectif</div>
+    <div id="objProgressContent"></div>
+  </div>
+
+  <div class="settings-section">
     <div class="settings-section-label">Icône iPhone</div>
     <div class="info-note">1. Ouvrir dans Safari — 2. Bouton Partager — 3. Sur l'ecran d'accueil</div>
   </div>
@@ -665,7 +700,7 @@ function goScreen(id){
   if(id==='analyse'){renderFavoris();}
   if(id==='bilan')calcScore();
   if(id==='today'){renderCoach();renderDay();}
-  if(id==='settings')loadSettings();
+  if(id==='settings'){loadSettings();renderObjectifProgress();}
   window.scrollTo(0,0);
 }
 function goPage(id){var m={'suivi':'cal'};goScreen(m[id]||id);}
@@ -1040,11 +1075,11 @@ function renderCoach(){
   var fl2=document.getElementById('finishBtnLabel');
   var fs2=document.getElementById('finishBtnSub');
   if(fl2){
-    if(hour<11)fl2.textContent='Que manger ce matin ?';
-    else if(hour<14)fl2.textContent='Que manger au déjeuner ?';
-    else if(hour<17)fl2.textContent='Idees pour la collation';
-    else if(hour<20)fl2.textContent='Que manger ce soir ?';
-    else fl2.textContent='Encore faim ? Idées souper';
+    if(hour<10)fl2.textContent='Que manger au déjeuner ?';
+    else if(hour<14)fl2.textContent='Que manger au dîner ?';
+    else if(hour<17)fl2.textContent='Idées collation';
+    else fl2.textContent='Que manger au souper ?';
+    //removeduper';
   }
 
   if(nextMeal&&MEAL_IDEAS[nextMeal]){
@@ -1052,7 +1087,7 @@ function renderCoach(){
     var itemsHtml='';
     ideas.forEach(function(m){
       itemsHtml+='<div style="display:flex;align-items:baseline;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)">'
-        +'<span style="font-size:20px;flex-shrink:0">'+m.e+'</span>'
+        +'<span style="width:20px;height:20px;border-radius:50%;background:var(--paper2);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;color:var(--muted)">•</span>'
         +'<div style="flex:1"><div style="font-size:14px;font-weight:500;color:var(--ink)">'+m.n+'</div>'
         +'<div style="font-size:12px;color:var(--muted);margin-top:3px">'+m.c+' kcal · P '+m.p+'g · G '+m.g+'g · L '+m.l+'g</div></div></div>';
     });
@@ -1303,6 +1338,12 @@ function loadSettings(){
   var G=getGoals();
   document.getElementById('gCal').value=G.cals||1750;document.getElementById('gPro').value=G.prot||160;
   document.getElementById('gGlu').value=G.gluc||140;document.getElementById('gLip').value=G.lip||60;
+  var obj=getObjectif();
+  if(obj.poidsActuel)document.getElementById('gPoidsActuel').value=obj.poidsActuel;
+  if(obj.poidsCible)document.getElementById('gPoidsCible').value=obj.poidsCible;
+  if(obj.grasseActuel)document.getElementById('gGrasseActuel').value=obj.grasseActuel;
+  if(obj.grasseCible)document.getElementById('gGrasseCible').value=obj.grasseCible;
+  if(obj.echeance)document.getElementById('gEcheance').value=obj.echeance;
 }
 function showOk(id){var e=document.getElementById(id);if(e){e.style.display='block';setTimeout(function(){e.style.display='none';},2000);}}
 
@@ -1883,6 +1924,68 @@ function renderFavoris() {
       + '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
       + '</button></div>';
   }).join('');
+}
+
+
+// ═══ OBJECTIF MENSUEL ══════════════════════════
+function getObjectif() {
+  try { return JSON.parse(localStorage.getItem('nObjectif')||'{}'); } catch(e) { return {}; }
+}
+function saveObjectif() {
+  var obj = {
+    poidsActuel: parseFloat(document.getElementById('gPoidsActuel').value)||83,
+    poidsCible:  parseFloat(document.getElementById('gPoidsCible').value)||75,
+    grasseActuel:parseFloat(document.getElementById('gGrasseActuel').value)||0,
+    grasseCible: parseFloat(document.getElementById('gGrasseCible').value)||0,
+    echeance:    document.getElementById('gEcheance').value||''
+  };
+  localStorage.setItem('nObjectif', JSON.stringify(obj));
+  showOk('objSaved');
+  renderObjectifProgress();
+}
+
+function renderObjectifProgress() {
+  var obj = getObjectif();
+  var sec = document.getElementById('objProgressSection');
+  var cont = document.getElementById('objProgressContent');
+  if(!sec||!cont||!obj.poidsCible) return;
+  sec.style.display = 'block';
+  var aP = obj.poidsActuel||83;
+  var cP = obj.poidsCible||75;
+  var diff = Math.round((aP-cP)*10)/10;
+  var kcalTotal = Math.round(diff*7700);
+  var html = '';
+  // Poids
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)">'
+    + '<div><div style="font-size:13px;font-weight:600;color:var(--ink)">Poids à perdre</div><div style="font-size:12px;color:var(--muted);margin-top:2px">'+aP+'kg → '+cP+'kg</div></div>'
+    + '<div style="font-family:DM Serif Display,serif;font-size:22px;color:var(--teal)">'+diff+'kg</div></div>';
+  // Déficit nécessaire
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)">'
+    + '<div><div style="font-size:13px;font-weight:600;color:var(--ink)">Déficit calorique total</div><div style="font-size:12px;color:var(--muted);margin-top:2px">7'700 kcal = 1kg de graisse</div></div>'
+    + '<div style="font-family:DM Serif Display,serif;font-size:22px;color:var(--ink)">'+kcalTotal.toLocaleString('fr')+'</div></div>';
+  // Durée estimée
+  var defJour = 525; // déficit actuel
+  var jours = Math.round(kcalTotal/defJour);
+  var semaines = Math.round(jours/7);
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)">'
+    + '<div><div style="font-size:13px;font-weight:600;color:var(--ink)">Durée estimée</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Avec déficit de 525 kcal/j</div></div>'
+    + '<div style="font-family:DM Serif Display,serif;font-size:22px;color:var(--ink)">'+semaines+' sem.</div></div>';
+  // Masse grasse
+  if(obj.grasseActuel && obj.grasseCible) {
+    var poidsMaigre = aP * (1 - obj.grasseActuel/100);
+    var poidsGrasseCible = cP * (obj.grasseCible/100);
+    var grasseAPerdrKg = Math.round((aP*obj.grasseActuel/100 - poidsGrasseCible)*10)/10;
+    html += '<div style="padding:12px 0">'
+      + '<div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px">Composition corporelle</div>'
+      + '<div style="display:flex;gap:12px">'
+      + '<div style="flex:1;background:var(--paper2);border-radius:10px;padding:10px;text-align:center"><div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Maintenant</div><div style="font-size:16px;font-weight:700;color:var(--ink)">'+obj.grasseActuel+'%</div><div style="font-size:11px;color:var(--muted)">'+aP+'kg</div></div>'
+      + '<div style="display:flex;align-items:center;font-size:18px;color:var(--muted)">→</div>'
+      + '<div style="flex:1;background:#EEF8F3;border-radius:10px;padding:10px;text-align:center"><div style="font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Objectif</div><div style="font-size:16px;font-weight:700;color:var(--teal)">'+obj.grasseCible+'%</div><div style="font-size:11px;color:var(--muted)">'+cP+'kg</div></div>'
+      + '</div>'
+      + '<div style="font-size:12px;color:var(--muted);margin-top:8px;text-align:center">Graisse à perdre : ~'+grasseAPerdrKg+'kg · Masse maigre à conserver : ~'+Math.round(poidsMaigre*10)/10+'kg</div>'
+      + '</div>';
+  }
+  cont.innerHTML = html;
 }
 
 // ═══ INIT ═══════════════════════════════════════
