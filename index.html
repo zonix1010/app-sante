@@ -2990,6 +2990,44 @@ function renderBilanHistory() {
 
 // ═══ SUIVI MORPHOLOGIQUE ════════════════════════
 
+
+function genPhotoComment(id) {
+  var apiKey = getKey();
+  if(!apiKey) { showToast('Clé API manquante'); return; }
+  var photos = getSuiviPhotos();
+  var p = photos.find(function(x){return x.id===id;});
+  if(!p) return;
+  showToast('Analyse en cours...');
+  var mensuel = getMensuel ? getMensuel() : {};
+  var ctx = mensuel.goal==='perte' ? 'objectif perte de graisse' : mensuel.goal==='prise' ? 'objectif prise de muscle' : 'objectif maintien';
+  fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({
+      model:'claude-haiku-4-5-20251001',
+      max_tokens:150,
+      messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:'image/jpeg',data:p.full.split(',')[1]}},
+        {type:'text',text:'Coach bienveillant. '+ctx+'. Observe cette photo corporelle et donne UN commentaire court (max 20 mots), motivant et précis sur ce que tu vois : posture, silhouette, ventre, épaules. Sois direct et encourageant. Rien d’autre.'}
+      ]}]
+    })
+  }).then(function(r){return r.json();})
+  .then(function(data){
+    var txt=(data.content||[]).find(function(x){return x.type==='text';});
+    if(!txt) return;
+    var comment = txt.text.trim().replace(/"/g,'');
+    // Save comment to photo
+    var photos2 = getSuiviPhotos();
+    var p2 = photos2.find(function(x){return x.id===id;});
+    if(p2) {
+      p2.comment = comment;
+      setSuiviPhotos(photos2);
+      renderSuivi();
+      showToast('Commentaire ajouté');
+    }
+  }).catch(function(){ showToast('Erreur réseau'); });
+}
+
 function renderSuivi() {
   var photos = getSuiviPhotos();
   var rappelEl = document.getElementById('suiviRappel');
@@ -3005,11 +3043,13 @@ function renderSuivi() {
       msg='Prenez votre première photo de référence pour commencer le suivi.';
       bg='#EEF8F3'; col='var(--teal)';
     } else if(daysSince>=7) {
-      msg='Il y a '+daysSince+' jours sans photo. Prenez-en une maintenant !';
+      msg='Rappel : '+daysSince+' jours depuis la dernière photo. Idéal pour voir l’évolution !';
       bg='#FBF0E0'; col='var(--amber)';
+    } else if(daysSince===0) {
+      msg='Photo prise aujourd’hui · '+photos.length+' photo'+(photos.length>1?'s':'')+' au total. Prenez-en une autre si vous voulez.';
+      bg='var(--paper2)'; col='var(--muted)';
     } else {
-      var next=7-daysSince;
-      msg='Dernière photo il y a '+daysSince+' jour'+(daysSince>1?'s':'')+'. Prochain rappel dans '+next+' jour'+(next>1?'s':'')+'.';
+      msg='Dernière photo il y a '+daysSince+' jour'+(daysSince>1?'s':'')+' · '+photos.length+' photo'+(photos.length>1?'s':'')+' au total.';
       bg='var(--paper2)'; col='var(--muted)';
     }
     rappelEl.innerHTML='<div style="background:'+bg+';border-radius:12px;padding:12px 16px;font-size:13px;color:'+col+';line-height:1.5;margin-bottom:16px">'+msg+'</div>';
@@ -3032,13 +3072,22 @@ function renderSuivi() {
     card.innerHTML = '<img src="'+p.thumb+'" style="width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:12px;display:block">'
       + '<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.7));border-radius:0 0 12px 12px;padding:20px 8px 8px">'
       + '<div style="font-size:11px;font-weight:700;color:#fff">Semaine '+p.week+'</div>'
-      + '<div style="font-size:10px;color:rgba(255,255,255,.7)">'+dateStr+'</div></div>';
+      + '<div style="font-size:10px;color:rgba(255,255,255,.7)">'+dateStr+'</div>'
+      + '</div>'
+      + (p.comment ? '<div style="position:absolute;top:6px;left:6px;right:32px;background:rgba(0,0,0,.65);border-radius:6px;padding:4px 7px;font-size:10px;color:#fff;line-height:1.4">'+p.comment+'</div>' : '');
     (function(pid){ card.addEventListener('click',function(){ showSuiviFullscreen(pid); }); })(p.id);
     var delBtn = document.createElement('button');
     delBtn.style.cssText = 'position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.5);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center';
     delBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
     (function(pid){ delBtn.addEventListener('click',function(e){ e.stopPropagation(); deleteSuiviPhoto(pid); }); })(p.id);
     card.appendChild(delBtn);
+    // IA comment button
+    var aiBtn = document.createElement('button');
+    aiBtn.style.cssText = 'position:absolute;top:6px;left:6px;width:26px;height:26px;border-radius:50%;background:rgba(0,107,94,.8);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center';
+    aiBtn.title = 'Commentaire IA';
+    aiBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
+    (function(pid){ aiBtn.addEventListener('click',function(e){ e.stopPropagation(); genPhotoComment(pid); }); })(p.id);
+    card.appendChild(aiBtn);
     gridEl.appendChild(card);
   });
 }
@@ -3114,6 +3163,16 @@ function addSuiviPhoto(event) {
       setSuiviPhotos(photos);
       renderSuivi();
       showToast('Photo enregistrée — Semaine '+getWeekNumber(now));
+      // Auto-offer IA comment if API key set
+      if(getKey() && photos.length >= 2) {
+        setTimeout(function(){
+          var analyseEl = document.getElementById('suiviAnalyse');
+          if(analyseEl) {
+            analyseEl.style.display = 'block';
+            analyseEl.scrollIntoView({behavior:'smooth', block:'center'});
+          }
+        }, 800);
+      }
     };
     img.src = e.target.result;
   };
