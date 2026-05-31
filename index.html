@@ -3091,5 +3091,24 @@ checkMonthlyModal();
   </div>
 </div>
 
+
+<!-- SCANNER MODAL -->
+<div id="scannerModal" style="display:none;position:fixed;inset:0;z-index:600;background:#000">
+  <div style="position:relative;width:100%;height:100%">
+    <video id="scannerVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover"></video>
+    <!-- Overlay -->
+    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none">
+      <div style="width:260px;height:160px;border:2px solid rgba(255,255,255,.8);border-radius:12px;box-shadow:0 0 0 2000px rgba(0,0,0,.5)"></div>
+      <div style="color:#fff;font-size:14px;font-weight:600;margin-top:20px;font-family:DM Sans,sans-serif;text-shadow:0 1px 4px rgba(0,0,0,.8)">Pointez vers le code-barre</div>
+    </div>
+    <!-- Close -->
+    <button onclick="stopBarcode()" style="position:absolute;top:calc(16px + env(safe-area-inset-top));right:16px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.5);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <!-- Status -->
+    <div id="scannerStatus" style="position:absolute;bottom:60px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;font-family:DM Sans,sans-serif;white-space:nowrap"></div>
+  </div>
+</div>
+
 </body>
 </html>
